@@ -1,47 +1,15 @@
 import { Check } from 'lucide-react';
-
-interface ProductCard {
-  id: number;
-  title: string;
-  subtitle: string;
-  description: string;
-  image: string;
-}
-
-const products: ProductCard[] = [
-  {
-    id: 1,
-    title: 'ידיות אוניברסליות',
-    subtitle: 'מתאימות לכל סוג בקבוק!',
-    description:
-      'ידיות איכותיות שמתאימות לכל סוגי הבקבוקים בשוק - לא משנה איזה בקבוק יש לך, זה יתאים בדיוק.',
-    image: 'https://placehold.co/400x400/fff6f2/52423d?text=Universal+Handles'
-  },
-  {
-    id: 2,
-    title: 'מחזיק בקבוק לעגלה',
-    subtitle: 'כדי שיהיה לך נוח גם בחוץ',
-    description:
-      'מתלה נוח ומעשי שמתחבר לעגלת התינוק, מאפשר לך להאכיל בבחות גם בטיולים ובחוץ.',
-    image: 'https://placehold.co/400x400/fff6f2/52423d?text=Stroller+Holder'
-  },
-  {
-    id: 3,
-    title: 'הכרית החכמה',
-    subtitle: 'הפתרון שלך לידיים חופשיות',
-    description:
-      'כרית מעוצבת ואיכותית שמחזיקה את הבקבוק במקום בזמן ההאכלה, כך שהידיים שלך פנויות לעשות מה שאת רוצה.',
-    image: 'https://placehold.co/400x400/fff6f2/52423d?text=Smart+Pillow'
-  }
-];
+import { activeContent } from '~/configs/content-active';
 
 export function BonusProductsSection() {
+  const { heading, includedBadge, products } = activeContent.bonusProducts;
+
   return (
     <section className="bg-[#fff6f2] py-12 md:py-16 lg:py-20" dir="rtl">
       <div className="container mx-auto px-4 md:px-8">
         <div className="max-w-6xl mx-auto text-center mb-8 md:mb-12">
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#52423d] leading-tight">
-            מהסלון ועד הטיול בעגלה: סגרנו לך את הפינה עם 2 מוצרי חובה (במתנה!)
+            {heading}
           </h2>
         </div>
 
@@ -54,11 +22,11 @@ export function BonusProductsSection() {
               <div className="relative w-full">
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#f2a085] px-3 py-1 rounded-full shadow-sm flex items-center gap-1.5 text-xs md:text-sm font-semibold text-white">
                   <Check className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" strokeWidth={2.6} />
-                  <span>כלול בחבילה</span>
+                  <span>{includedBadge}</span>
                 </div>
                 <div className="overflow-hidden rounded-xl border border-[#f2e3dd] shadow-[0_6px_16px_rgba(0,0,0,0.05)]">
                   <img
-                    src={product.image}
+                    src={product.imagePlaceholder}
                     alt={product.title}
                     className="w-full h-full object-cover"
                     loading="lazy"
@@ -84,4 +52,3 @@ export function BonusProductsSection() {
     </section>
   );
 }
-

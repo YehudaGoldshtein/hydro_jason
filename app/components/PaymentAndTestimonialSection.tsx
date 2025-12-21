@@ -1,6 +1,9 @@
 import { Star } from 'lucide-react';
+import { activeContent } from '~/configs/content-active';
 
 export function PaymentAndTestimonialSection() {
+  const { quote, author, authorAlt } = activeContent.paymentTestimonial;
+
   return (
     <section className="bg-[#fff6f2] pt-6 pb-12 md:pt-8 md:pb-16" dir="rtl">
       <div className="container mx-auto px-4 md:px-8">
@@ -12,7 +15,7 @@ export function PaymentAndTestimonialSection() {
               <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden shadow-sm">
                 <img 
                   src="https://placehold.co/100x100/e07a63/white?text=A" 
-                  alt="זהבה ג."
+                  alt={authorAlt}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -22,7 +25,7 @@ export function PaymentAndTestimonialSection() {
             <div className="flex-1 max-w-xl">
               {/* Quote Text */}
               <p className="text-base md:text-lg text-[#52423d] leading-relaxed mb-3 md:mb-4 text-right">
-                "לא האמנתי שמשהו ככה פשוט יכול לכל כך לשנות את היממה"
+                {quote}
               </p>
 
               {/* Star Rating */}
@@ -37,7 +40,7 @@ export function PaymentAndTestimonialSection() {
 
               {/* Author Name */}
               <p className="text-sm md:text-base text-[#52423d] font-semibold text-right">
-                זהבה ג.
+                {author}
               </p>
             </div>
           </div>
@@ -46,4 +49,3 @@ export function PaymentAndTestimonialSection() {
     </section>
   );
 }
-

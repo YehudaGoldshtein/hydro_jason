@@ -1,64 +1,22 @@
 import { CheckCircle2, Globe2, MessageCircle, MoreHorizontal, ThumbsUp, User } from 'lucide-react';
-
-interface Review {
-  name: string;
-  subtitle?: string;
-  text: string;
-  timeAgo: string;
-  likes: number;
-  comments: number;
-  initials?: string;
-}
-
-const reviews: Review[] = [
-  {
-    name: 'יעל לוי',
-    text: 'היינו בסיוט של צרחות כל ערב ב-18:00. מהרגע שהתחלנו להשתמש בכרית, רואים בעיניים איך הבועות נשארות למעלה ולא נכנסות לפטמה. ההתקפים נעלמו כמעט לגמרי. זה לא מוצר פינוק, זה מוצר בריאות.',
-    timeAgo: 'לפני יומיים',
-    likes: 132,
-    comments: 9,
-    initials: 'יל'
-  },
-  {
-    name: 'דנה ישראלי',
-    text: 'שרפנו הון על בקבוקים מיוחדים נגד גזים ושום דבר לא עזר. רק כשהבנתי שהבעיה היא הזווית ולא הבקבוק, הכל השתנה. הילדה אוכלת רגוע, לא בולעת אוויר, והלילות שלנו חזרו להיות שפויים. חבל שלא הכרתי את זה קודם.',
-    timeAgo: 'לפני 4 שעות',
-    likes: 214,
-    comments: 17,
-    initials: 'די'
-  },
-  {
-    name: 'מיכל כהן',
-    text: 'חשבתי שהכרית זה סתם לנוחות שלי, אבל הייתי בשוק מההשפעה על הבטן שלו. ברגע שהבקבוק יציב ולא זז מילימטר, אין בועות אוויר. הוא מסיים לאכול, עושה גרעפס והולך לישון. פשוט קסם.',
-    timeAgo: 'לפני 3 ימים',
-    likes: 98,
-    comments: 6,
-    initials: 'מק'
-  },
-  {
-    name: 'שני דוידי',
-    text: 'הרופא אמר ש\'זה יעבור לבד\', אבל לא היינו מוכנים לחכות שהם יסבלו. הכרית הזו הצילה אותנו. הם אוכלים בזווית מושלמת, רגועים לחלוטין, ואנחנו זכינו בחיים שלנו בחזרה. חובה לכל הורה.',
-    timeAgo: 'לפני שבוע',
-    likes: 167,
-    comments: 11,
-    initials: 'שד'
-  }
-];
+import { activeContent } from '~/configs/content-active';
 
 export function SocialProof() {
+  const { badge, heading, subheading, verifiedPurchase, likeButton, replyButton, reviews } = activeContent.socialProof;
+
   return (
     <section className="bg-[#fff6f2] py-12 md:py-16 lg:py-20" dir="rtl">
       <div className="container mx-auto px-4 md:px-8">
         <div className="max-w-6xl mx-auto mb-6 md:mb-8 text-center">
           <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#f2e3dd] shadow-[0_10px_30px_rgba(0,0,0,0.05)] text-sm md:text-base text-[#52423d]">
             <CheckCircle2 className="w-4.5 h-4.5 text-[#34d399]" strokeWidth={2.4} />
-            <span className="font-semibold">צילום מסך מפיד אמיתי (UGC)</span>
+            <span className="font-semibold">{badge}</span>
           </div>
           <h2 className="text-2xl md:text-3xl font-bold text-[#52423d] mt-3">
-            ככה זה נראה כשהבטן רגועה והלילות חוזרים לשקט
+            {heading}
           </h2>
           <p className="text-base md:text-lg text-[#7a6c66] mt-2 max-w-3xl mx-auto">
-            פיד תגובות אמיתי, כמו צילום מסך מפייסבוק: זמן אמת, רכישה מאומתת, והורים שמגיבים.
+            {subheading}
           </p>
         </div>
 
@@ -81,7 +39,7 @@ export function SocialProof() {
                     <span className="text-base md:text-lg font-semibold text-[#52423d]">{review.name}</span>
                     <div className="flex items-center gap-1 text-[11px] md:text-xs text-[#7a6c66]">
                       <CheckCircle2 className="w-3.5 h-3.5 text-[#34d399]" strokeWidth={2.6} />
-                      <span>רכישה מאומתת</span>
+                      <span>{verifiedPurchase}</span>
                       <span className="text-[#b9a9a2]">·</span>
                       <span>{review.timeAgo}</span>
                       <span className="text-[#b9a9a2]">·</span>
@@ -100,11 +58,11 @@ export function SocialProof() {
                 <div className="flex items-center gap-3">
                   <button className="inline-flex items-center gap-1 text-[#52423d] hover:text-[#e07a63] transition-colors">
                     <ThumbsUp className="w-4 h-4" />
-                    <span>אהבתי</span>
+                    <span>{likeButton}</span>
                   </button>
                   <button className="inline-flex items-center gap-1 text-[#52423d] hover:text-[#e07a63] transition-colors">
                     <MessageCircle className="w-4 h-4" />
-                    <span>הגב</span>
+                    <span>{replyButton}</span>
                   </button>
                 </div>
                 <div className="flex items-center gap-2 text-[#7a6c66]">
@@ -125,4 +83,3 @@ export function SocialProof() {
     </section>
   );
 }
-

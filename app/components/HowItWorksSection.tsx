@@ -1,36 +1,14 @@
-interface Step {
-  number: string;
-  title: string;
-  text: string;
-  highlight?: boolean;
-}
-
-const steps: Step[] = [
-  {
-    number: '1',
-    title: 'הניחי את הכרית',
-    text: 'הבד הקטיפתי יעניק לתינוק תחושת רוגע מיידית.'
-  },
-  {
-    number: '2',
-    title: 'הצמידי את הבקבוק',
-    text: 'רצועת האחיזה הגמישה תחזיק אותו יציב בזווית הנכונה.',
-    highlight: true
-  },
-  {
-    number: '3',
-    title: 'שחררי את הידיים',
-    text: 'התינוק אוכל בבטחה, ואת סוף סוף מתפנה לעצמך.'
-  }
-];
+import { activeContent } from '~/configs/content-active';
 
 export function HowItWorksSection() {
+  const { heading, steps } = activeContent.howItWorks;
+
   return (
     <section className="bg-[#fff6f2] py-12 md:py-16 lg:py-20" dir="rtl">
       <div className="container mx-auto px-4 md:px-8">
         <div className="max-w-5xl mx-auto text-center mb-8 md:mb-12">
           <h2 className="text-2xl md:text-3xl font-bold text-[#52423d]">
-            אז איך בדיוק זה הופך להיות כל כך פשוט?
+            {heading}
           </h2>
         </div>
 
@@ -63,5 +41,3 @@ export function HowItWorksSection() {
     </section>
   );
 }
-
-

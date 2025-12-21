@@ -1,7 +1,18 @@
 import { Star } from 'lucide-react';
+import { useCheckout } from '~/lib/useCheckout';
+import { useLoaderData } from '@remix-run/react';
 
 export function IndependenceCtaSection() {
   const stars = Array.from({ length: 5 });
+  const { goToCheckout, isSubmitting } = useCheckout();
+  const { product } = useLoaderData<typeof import('~/routes/_index').loader>();
+
+  const handleCheckout = () => {
+    const firstVariant = product?.variants?.nodes?.[0];
+    if (firstVariant?.id) {
+      goToCheckout(firstVariant.id, 1);
+    }
+  };
 
   return (
     <section className="bg-[#fff6f2] py-12 md:py-16 lg:py-20" dir="rtl">
@@ -13,9 +24,11 @@ export function IndependenceCtaSection() {
 
           <button
             type="button"
-            className="w-full md:w-auto bg-gradient-to-r from-[#de7e63] via-[#e79a7b] to-[#e9a481] text-white font-bold text-base md:text-lg py-3.5 md:py-4 px-8 rounded-full shadow-[0_6px_16px_rgba(224,122,99,0.35)] hover:shadow-[0_8px_20px_rgba(224,122,99,0.45)] transition-all hover:scale-[1.02] active:scale-[0.98]"
+            onClick={handleCheckout}
+            disabled={isSubmitting}
+            className="w-full md:w-auto bg-gradient-to-r from-[#de7e63] via-[#e79a7b] to-[#e9a481] text-white font-bold text-base md:text-lg py-3.5 md:py-4 px-8 rounded-full shadow-[0_6px_16px_rgba(224,122,99,0.35)] hover:shadow-[0_8px_20px_rgba(224,122,99,0.45)] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            אז אני רוצה להחזיר את הערכה שלי עכשיו!
+            {isSubmitting ? 'מעביר לצ\'קאאוט...' : 'אז אני רוצה להחזיר את הערכה שלי עכשיו!'}
           </button>
 
           <div className="w-full flex flex-col items-center gap-4">

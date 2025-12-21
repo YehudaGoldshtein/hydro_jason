@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Check, Circle, Sparkles } from 'lucide-react';
 import { useFetcher } from '@remix-run/react';
+import { activeContent } from '~/configs/content-active';
 
 interface PricingOption {
   id: string;
@@ -42,8 +43,8 @@ interface PricingSelectionSectionProps {
 export function PricingSelectionSection({ product }: PricingSelectionSectionProps) {
   // Use numeric index instead of string IDs - default to 0 (first option)
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
-  const fetcher = useFetcher();
-  const fetcherData = fetcher.data as { error?: string } | undefined;
+  const fetcher = useFetcher<{ success: boolean; checkoutUrl?: string; error?: string }>();
+  const fetcherData = fetcher.data;
 
   // Log product data for debugging
   console.log('🛒 COMPONENT: Product prop:', product);
@@ -61,32 +62,33 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
 
   // Map product variants to pricing options
   const buildPricingOptions = (): PricingOption[] => {
+    const contentOptions = activeContent.pricing.options;
     const defaultOptions: PricingOption[] = [
       {
-        id: 'option1',
-        label: 'קנה 1',
+        id: contentOptions[0].id,
+        label: contentOptions[0].label,
         price: 199.00,
-        shippingText: 'משלוח חינם עד הבית'
+        shippingText: contentOptions[0].shippingText
       },
       {
-        id: 'option2',
-        label: 'קנה 2',
+        id: contentOptions[1].id,
+        label: contentOptions[1].label,
         price: 349.00,
         originalPrice: 399.00,
         savings: 50.00,
         discountPercentage: 15,
-        floatingBadge: 'לבית ולבחוץ',
-        shippingText: 'משלוח חינם עד הבית'
+        floatingBadge: contentOptions[1].floatingBadge,
+        shippingText: contentOptions[1].shippingText
       },
       {
-        id: 'option3',
-        label: 'קנה 3',
+        id: contentOptions[2].id,
+        label: contentOptions[2].label,
         price: 449.00,
         originalPrice: 599.00,
         savings: 150.00,
         discountPercentage: 25,
-        floatingBadge: 'לך ולחברה',
-        shippingText: 'משלוח חינם עד הבית'
+        floatingBadge: contentOptions[2].floatingBadge,
+        shippingText: contentOptions[2].shippingText
       }
     ];
 
@@ -96,8 +98,8 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
     }
 
     const variants = product.variants.nodes;
-    const labels = ['קנה 1', 'קנה 2', 'קנה 3'];
-    const badges = [undefined, 'לבית ולבחוץ', 'לך ולחברה'];
+    const labels = activeContent.pricing.options.map(opt => opt.label);
+    const badges = activeContent.pricing.options.map(opt => opt.floatingBadge);
 
     return variants.slice(0, 3).map((variant, index) => {
       const price = parsePrice(variant.price.amount);
@@ -113,12 +115,13 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
         savings,
         discountPercentage,
         floatingBadge: badges[index],
-        shippingText: 'משלוח חינם עד הבית'
+        shippingText: activeContent.pricing.options[0].shippingText
       };
     });
   };
 
   const pricingOptions = buildPricingOptions();
+  const { heading, ctaButton, savingsText, paymentMethodsAlt } = activeContent.pricing;
 
   // Get selected variant with safe access
   const selectedVariant = product?.variants?.nodes?.[selectedIdx] || null;
@@ -129,6 +132,13 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
   console.log('🎯 Full Selected Variant:', selectedVariant);
   console.log('🎯 Selected Index:', selectedIdx);
   console.log('🎯 Merchandise ID for form:', merchandiseId);
+
+  // Handle redirect when checkout URL is received
+  useEffect(() => {
+    if (fetcherData?.success && fetcherData.checkoutUrl) {
+      window.location.href = fetcherData.checkoutUrl;
+    }
+  }, [fetcherData]);
 
   const handleAddToCart = () => {
     console.log('🚀 ADD TO CART CLICKED!');
@@ -163,7 +173,7 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
       <div className="container mx-auto px-4 md:px-8">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold text-center text-[#e07a63] mb-8 md:mb-12">
-            קנו עכשיו במחירי השקה חסרי תקדים
+            {heading}
           </h2>
 
           <div className="space-y-4 mb-6">
@@ -206,7 +216,7 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
 
                       {option.savings && (
                         <div className="text-sm text-[#e07a63] font-medium mb-1">
-                          חסוך ₪{option.savings.toFixed(2)}
+                          {savingsText} ₪{option.savings.toFixed(2)}
                         </div>
                       )}
 
@@ -218,7 +228,7 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
                     {option.discountPercentage && (
                       <div className="flex-shrink-0">
                         <div className="bg-[#e07a63] text-white rounded-full w-16 h-16 flex flex-col items-center justify-center shadow-sm">
-                          <span className="text-xs font-medium leading-tight">חסוך</span>
+                          <span className="text-xs font-medium leading-tight">{savingsText}</span>
                           <span className="text-lg font-bold leading-tight">{option.discountPercentage}%</span>
                         </div>
                       </div>
@@ -250,7 +260,7 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
             onClick={handleAddToCart}
             className="w-full bg-gradient-to-r from-[#de7e63] via-[#e79a7b] to-[#e9a481] text-white font-bold text-base md:text-lg py-3.5 md:py-4 px-8 rounded-full shadow-[0_6px_16px_rgba(224,122,99,0.35)] hover:shadow-[0_8px_20px_rgba(224,122,99,0.45)] transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
           >
-            {fetcher.state === 'submitting' ? 'מוסיף לעגלה...' : 'אני רוצה פחות גזים לתינוק שלי'}
+            {fetcher.state === 'submitting' ? ctaButton.submitting : ctaButton.default}
           </button>
 
           {/* Show any fetcher errors */}
@@ -265,7 +275,7 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
             <div className="w-full max-w-xl rounded-2xl bg-white border border-[#f2e3dd] shadow-[0_10px_30px_rgba(0,0,0,0.06)] p-4 md:p-5 flex items-center justify-center min-h-[110px]">
               <img
                 src="https://placehold.co/600x60/ffffff/52423d?text=Payment+Methods"
-                alt="אמצעי תשלום - Visa, Mastercard, Bit, Apple Pay, Google Pay"
+                alt={paymentMethodsAlt}
                 className="w-full h-16 md:h-20 object-contain"
                 loading="lazy"
               />

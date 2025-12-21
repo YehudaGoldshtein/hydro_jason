@@ -1,25 +1,34 @@
 import { Star } from 'lucide-react';
+import { useCheckout } from '~/lib/useCheckout';
+import { useLoaderData } from '@remix-run/react';
+import { activeContent } from '~/configs/content-active';
 
-interface BenefitItem {
-  id: number;
-  text: string;
+function CheckoutButton() {
+  const { goToCheckout, isSubmitting } = useCheckout();
+  const { product } = useLoaderData<typeof import('~/routes/_index').loader>();
+  const { ctaButton } = activeContent.antiColicBenefits;
+
+  const handleCheckout = () => {
+    const firstVariant = product?.variants?.nodes?.[0];
+    if (firstVariant?.id) {
+      goToCheckout(firstVariant.id, 1);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleCheckout}
+      disabled={isSubmitting}
+      className="bg-gradient-to-r from-[#de7e63] via-[#e79a7b] to-[#e9a481] text-white font-bold text-base md:text-lg py-3.5 md:py-4 px-8 md:px-10 rounded-full shadow-[0_6px_16px_rgba(224,122,99,0.35)] hover:shadow-[0_8px_20px_rgba(224,122,99,0.45)] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {isSubmitting ? ctaButton.submitting : ctaButton.default}
+    </button>
+  );
 }
 
 export function AntiColicBenefitsSection() {
-  const benefits: BenefitItem[] = [
-    {
-      id: 1,
-      text: 'התינוק אוכל נקי ורגוע: 100% חלב, 0% בועות אוויר שגורמות לכאב'
-    },
-    {
-      id: 2,
-      text: 'את חוסכת הוצאות מיותרות על מותגים – ומשקיעה בפתרון שבאמת עובד.'
-    },
-    {
-      id: 3,
-      text: 'והבונוס? הידיים שלך משתחררות לקפה חם, והלב שלך שקט מדאגות'
-    }
-  ];
+  const { headline, subtext, highlightText, benefits } = activeContent.antiColicBenefits;
 
   return (
     <section className="bg-[#fff6f2] py-12 md:py-16 lg:py-20" dir="rtl">
@@ -29,17 +38,17 @@ export function AntiColicBenefitsSection() {
           <div className="bg-white rounded-3xl p-6 md:p-10 lg:p-12 shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
             {/* Headline */}
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center text-[#52423d] mb-4 md:mb-6">
-              שרפת הרבה כסף על "בקבוקים נגד גזים"?
+              {headline}
             </h2>
 
             {/* Subtext */}
             <p className="text-sm md:text-base text-center text-[#7a6c66] mb-6 md:mb-8 max-w-2xl mx-auto leading-relaxed">
-              בואי נדבר תכלס: גם הבקבוק הכי משוכלל לא יעזור אם היד שלך מתעייפת והזווית צונחת. ברגע שהבקבוק יורד למטה – האוויר נכנס, והגזים בדרך.
+              {subtext}
             </p>
 
             {/* Highlight Text */}
             <p className="text-base md:text-lg lg:text-xl font-bold text-center text-[#e07a63] mb-8 md:mb-10">
-              הכרית הזו הופכת כל בקבוק פשוט למערכת אנטי-קוליק מושלמת
+              {highlightText}
             </p>
 
             {/* Benefits List */}
@@ -67,9 +76,7 @@ export function AntiColicBenefitsSection() {
 
             {/* CTA Button */}
             <div className="flex justify-center mb-8 md:mb-10">
-              <button className="bg-gradient-to-r from-[#de7e63] via-[#e79a7b] to-[#e9a481] text-white font-bold text-base md:text-lg py-3.5 md:py-4 px-8 md:px-10 rounded-full shadow-[0_6px_16px_rgba(224,122,99,0.35)] hover:shadow-[0_8px_20px_rgba(224,122,99,0.45)] transition-all hover:scale-[1.02] active:scale-[0.98]">
-                עזבי מותגים - תסדרי לו את הזווית
-              </button>
+              <CheckoutButton />
             </div>
 
           </div>
@@ -78,4 +85,3 @@ export function AntiColicBenefitsSection() {
     </section>
   );
 }
-

@@ -1,12 +1,12 @@
-import { json, type ActionFunctionArgs } from '@shopify/remix-oxygen';
+import { json, redirect, type ActionFunctionArgs } from '@shopify/remix-oxygen';
 import { storefrontQuery } from '~/lib/shopify.server';
 
-const CART_LINES_ADD_MUTATION = `#graphql
-  mutation CartLinesAdd($cartId: ID!, $lines: [CartLineInput!]!) {
-    cartLinesAdd(cartId: $cartId, lines: $lines) {
+const CART_CREATE_MUTATION = `#graphql
+  mutation cartCreate($cartInput: CartInput!) {
+    cartCreate(input: $cartInput) {
       cart {
         id
-        totalQuantity
+        checkoutUrl
       }
       userErrors {
         field
@@ -16,31 +16,83 @@ const CART_LINES_ADD_MUTATION = `#graphql
   }
 `;
 
-export async function action({ request }: ActionFunctionArgs) {
+const CART_LINES_ADD_MUTATION = `#graphql
+  mutation cartLinesAdd($cartId: ID!, $lines: [CartLineInput!]!) {
+    cartLinesAdd(cartId: $cartId, lines: $lines) {
+      cart {
+        id
+        checkoutUrl
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`;
+
+export async function action({ request, context }: ActionFunctionArgs) {
   const formData = await request.formData();
   const cartAction = formData.get('cartAction');
-  const linesData = formData.get('lines');
+  const merchandiseId = formData.get('merchandiseId') as string;
+  const quantity = parseInt(formData.get('quantity') as string) || 1;
+  const cartId = formData.get('cartId') as string | null;
 
-  if (cartAction === 'ADD_TO_CART' && linesData) {
+  if (cartAction === 'ADD_TO_CART' && merchandiseId) {
     try {
-      const lines = JSON.parse(linesData as string);
-      
-      // For now, return a simple response
-      // In a full implementation, you'd need to:
-      // 1. Get or create a cart ID (from cookies or session)
-      // 2. Call the cartLinesAdd mutation using storefrontQuery
-      // 3. Return the updated cart
-      
-      console.log('Adding to cart:', lines);
-      
-      return json({ 
-        success: true,
-        message: 'Item added to cart',
-        lines 
-      });
+      let checkoutUrl: string;
+
+      if (cartId) {
+        // Add to existing cart
+        const { data } = await storefrontQuery(CART_LINES_ADD_MUTATION, {
+          cartId,
+          lines: [
+            {
+              merchandiseId,
+              quantity,
+            },
+          ],
+        });
+
+        if (data.cartLinesAdd.userErrors?.length > 0) {
+          return json(
+            { success: false, error: data.cartLinesAdd.userErrors[0].message },
+            { status: 400 }
+          );
+        }
+
+        checkoutUrl = data.cartLinesAdd.cart.checkoutUrl;
+      } else {
+        // Create new cart
+        const { data } = await storefrontQuery(CART_CREATE_MUTATION, {
+          cartInput: {
+            lines: [
+              {
+                merchandiseId,
+                quantity,
+              },
+            ],
+          },
+        });
+
+        if (data.cartCreate.userErrors?.length > 0) {
+          return json(
+            { success: false, error: data.cartCreate.userErrors[0].message },
+            { status: 400 }
+          );
+        }
+
+        checkoutUrl = data.cartCreate.cart.checkoutUrl;
+      }
+
+      // Return checkout URL - client will handle redirect
+      return json({ success: true, checkoutUrl });
     } catch (error) {
-      console.error('Error parsing lines data:', error);
-      return json({ success: false, error: 'Invalid cart data' }, { status: 400 });
+      console.error('Error adding to cart:', error);
+      return json(
+        { success: false, error: error instanceof Error ? error.message : 'Failed to add to cart' },
+        { status: 500 }
+      );
     }
   }
 

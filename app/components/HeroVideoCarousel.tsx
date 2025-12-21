@@ -1,31 +1,23 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
+import { activeContent } from '~/configs/content-active';
 
 interface Slide {
   id: number;
   type: 'video' | 'image';
   src?: string;
-  alt?: string;
+  alt: string;
 }
 
 export function HeroVideoCarousel() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const { slides: slidesData, ariaLabels, placeholders } = activeContent.heroVideoCarousel;
 
-  const slides: Slide[] = [
-    {
-      id: 1,
-      type: 'video',
-      src: undefined, // Placeholder - will show colored box
-      alt: 'תינוק אוכל בנוחות עם Feed-Ease'
-    },
-    {
-      id: 2,
-      type: 'image',
-      src: undefined, // Placeholder - will show colored box
-      alt: 'המוצר שלנו בפעולה'
-    }
-  ];
+  const slides: Slide[] = slidesData.map((slide) => ({
+    ...slide,
+    src: undefined, // Placeholder - will show colored box
+  }));
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -75,14 +67,14 @@ export function HeroVideoCarousel() {
                         playsInline
                       >
                         <source src={slide.src} type="video/mp4" />
-                        הדפדפן שלך לא תומך בווידאו.
+                        {placeholders.browserNotSupported}
                       </video>
                     ) : (
                       // Video Placeholder
                       <div className="w-full h-full bg-gradient-to-br from-[#de7e63] via-[#e79a7b] to-[#e9a481] flex items-center justify-center">
                         <div className="text-center text-white">
                           <Play className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-4 opacity-50" />
-                          <p className="text-xl md:text-3xl font-bold">VIDEO</p>
+                          <p className="text-xl md:text-3xl font-bold">{placeholders.video}</p>
                           <p className="text-sm md:text-base mt-2 opacity-75">
                             {slide.alt}
                           </p>
@@ -103,7 +95,7 @@ export function HeroVideoCarousel() {
                           <div className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-4 bg-white/20 rounded-2xl flex items-center justify-center">
                             <span className="text-4xl md:text-6xl">🖼️</span>
                           </div>
-                          <p className="text-xl md:text-3xl font-bold">IMAGE</p>
+                          <p className="text-xl md:text-3xl font-bold">{placeholders.image}</p>
                           <p className="text-sm md:text-base mt-2 opacity-75">
                             {slide.alt}
                           </p>
@@ -119,7 +111,7 @@ export function HeroVideoCarousel() {
             <button
               onClick={prevSlide}
               className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
-              aria-label="הקודם"
+              aria-label={ariaLabels.previous}
             >
               <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-[#52423d]" strokeWidth={2.5} />
             </button>
@@ -127,7 +119,7 @@ export function HeroVideoCarousel() {
             <button
               onClick={nextSlide}
               className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
-              aria-label="הבא"
+              aria-label={ariaLabels.next}
             >
               <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-[#52423d]" strokeWidth={2.5} />
             </button>
@@ -136,7 +128,7 @@ export function HeroVideoCarousel() {
             <button
               onClick={() => setIsPlaying(!isPlaying)}
               className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#52423d]/70 hover:bg-[#52423d]/90 w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95 opacity-0 hover:opacity-100"
-              aria-label={isPlaying ? 'השהה' : 'הפעל'}
+              aria-label={isPlaying ? ariaLabels.pause : ariaLabels.play}
             >
               {isPlaying ? (
                 <Pause className="w-6 h-6 md:w-8 md:h-8 text-white" fill="white" />
@@ -156,7 +148,7 @@ export function HeroVideoCarousel() {
                       ? 'w-8 h-2 bg-white'
                       : 'w-2 h-2 bg-white/50 hover:bg-white/75'
                   } rounded-full`}
-                  aria-label={`עבור לשקופית ${index + 1}`}
+                  aria-label={`${ariaLabels.goToSlide} ${index + 1}`}
                 />
               ))}
             </div>
@@ -166,6 +158,8 @@ export function HeroVideoCarousel() {
     </section>
   );
 }
+
+
 
 
 

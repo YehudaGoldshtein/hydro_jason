@@ -1,39 +1,15 @@
 import { Shield, Sparkles, Heart, Grid3x3 } from 'lucide-react';
+import { activeContent } from '~/configs/content-active';
 
-interface Feature {
-  id: number;
-  icon: typeof Shield;
-  title: string;
-  description: string;
-}
+const iconMap: Record<number, typeof Shield> = {
+  1: Shield,
+  2: Heart,
+  3: Sparkles,
+  4: Grid3x3,
+};
 
 export function WhyChooseUsSection() {
-  const features: Feature[] = [
-    {
-      id: 1,
-      icon: Shield,
-      title: 'בטיחות לפני הכל',
-      description: 'עיצוב ארגונומי המותאם למבנה התינוק ומונע החלקה.'
-    },
-    {
-      id: 2,
-      icon: Heart,
-      title: 'שירות אישי',
-      description: 'אבא ואמא (תיתיר משמש) לכל שאלה, משלוח מהיר ואחריות.'
-    },
-    {
-      id: 3,
-      icon: Sparkles,
-      title: 'חומרים איכותיים',
-      description: 'בד קטיפתי, נושם ועמיד למכונה. בניין לכביסה במכונה.'
-    },
-    {
-      id: 4,
-      icon: Grid3x3,
-      title: 'התאמה אוניברסלית',
-      description: 'מתאים לכל סוגי הבקבוקים והסטנדרטים בשוק.'
-    }
-  ];
+  const { heading, features } = activeContent.whyChooseUs;
 
   return (
     <section className="bg-[#fff6f2] py-12 md:py-16 lg:py-20" dir="rtl">
@@ -61,13 +37,13 @@ export function WhyChooseUsSection() {
 
           {/* Main Title */}
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center text-[#52423d] mb-10 md:mb-14">
-            למה הורים בוחרים ב-EasyFeed בראש שקט?
+            {heading}
           </h2>
 
           {/* Features Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
             {features.map((feature) => {
-              const Icon = feature.icon;
+              const Icon = iconMap[feature.id];
               return (
                 <div
                   key={feature.id}
@@ -98,6 +74,3 @@ export function WhyChooseUsSection() {
     </section>
   );
 }
-
-
-

@@ -1,6 +1,9 @@
 import { ShieldCheck } from 'lucide-react';
+import { activeContent } from '~/configs/content-active';
 
 export function GuaranteeSection() {
+  const { heading, subheading, bodyText } = activeContent.guarantee;
+
   return (
     <section className="bg-[#fff6f2] py-12 md:py-16 lg:py-20" dir="rtl">
       <div className="container mx-auto px-4 md:px-8">
@@ -10,21 +13,20 @@ export function GuaranteeSection() {
           </div>
 
           <h2 className="text-2xl md:text-3xl font-bold text-[#52423d]">
-            ההתחייבות המוחלטת שלנו
+            {heading}
           </h2>
 
           <p className="text-base md:text-lg font-medium text-[#7a6c66]">
-            100% שקט נפשי או כסף בחזרה
+            {subheading}
           </p>
 
           <div className="w-12 h-0.5 bg-[#f2a085] rounded-full" />
 
           <p className="text-sm md:text-base leading-relaxed text-[#52423d] max-w-2xl">
-            נסי את ה-Feed-Ease למשך 30 ימים. אנחנו כל כך בטוחים שזה ישנה לך את החיים, שאם לא תרגישי ירידה בלחץ - פשוט תקבלי החזר כספי מלא, בלי שאלות ובלי אותיות קטנות.
+            {bodyText}
           </p>
         </div>
       </div>
     </section>
   );
 }
-
