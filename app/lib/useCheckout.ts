@@ -10,14 +10,20 @@ export function useCheckout() {
 
   // Handle redirect when checkout URL is received
   useEffect(() => {
+    console.log('🔍 useCheckout - fetcher.data:', fetcher.data);
     if (fetcher.data?.success && fetcher.data.checkoutUrl) {
+      console.log('✅ Redirecting to checkout:', fetcher.data.checkoutUrl);
       window.location.href = fetcher.data.checkoutUrl;
+    } else if (fetcher.data?.error) {
+      console.error('❌ Checkout error:', fetcher.data.error);
     }
   }, [fetcher.data]);
 
   const goToCheckout = (merchandiseId: string, quantity: number = 1) => {
+    console.log('🚀 goToCheckout called with:', { merchandiseId, quantity });
+    
     if (!merchandiseId) {
-      console.error('No merchandise ID provided');
+      console.error('❌ No merchandise ID provided');
       return;
     }
 
@@ -25,6 +31,12 @@ export function useCheckout() {
     formData.append('cartAction', 'ADD_TO_CART');
     formData.append('merchandiseId', merchandiseId);
     formData.append('quantity', quantity.toString());
+
+    console.log('📤 Submitting to /cart with formData:', {
+      cartAction: 'ADD_TO_CART',
+      merchandiseId,
+      quantity: quantity.toString()
+    });
 
     fetcher.submit(formData, {
       method: 'post',

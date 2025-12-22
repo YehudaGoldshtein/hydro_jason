@@ -25,11 +25,20 @@ export function StickyBuyBar() {
   }, []);
 
   const handleClick = () => {
+    console.log('🔘 StickyBuyBar clicked!');
+    console.log('📦 Product:', product);
+    console.log('🎯 Selected Index:', selectedVariantIndex);
+    console.log('🎯 All Variants:', product?.variants?.nodes);
+    
     // Use the selected variant from context (default is 0 = ₪199)
     const selectedVariant = product?.variants?.nodes?.[selectedVariantIndex];
+    console.log('✅ Selected Variant:', selectedVariant);
+    
     if (selectedVariant?.id) {
+      console.log('🚀 Calling goToCheckout with:', selectedVariant.id);
       goToCheckout(selectedVariant.id, 1);
     } else {
+      console.log('⚠️ No variant found, scrolling to pricing');
       // Fallback: scroll to pricing section
       const target = document.getElementById('pricing');
       if (target) {

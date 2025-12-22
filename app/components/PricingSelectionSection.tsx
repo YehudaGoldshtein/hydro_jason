@@ -144,9 +144,11 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
   }, [fetcherData]);
 
   const handleAddToCart = () => {
-    console.log('🚀 ADD TO CART CLICKED!');
+    console.log('🚀 ADD TO CART CLICKED IN PRICING SECTION!');
+    console.log('🎯 Selected Index:', selectedIdx);
     console.log('🚀 Merchandise ID:', merchandiseId);
     console.log('🚀 Selected Variant:', selectedVariant);
+    console.log('📦 All Variants:', product?.variants?.nodes);
 
     if (!merchandiseId) {
       console.error('❌ NO MERCHANDISE ID! Cannot add to cart.');
