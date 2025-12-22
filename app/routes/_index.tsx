@@ -22,6 +22,7 @@ import { FaqSection } from '~/components/FaqSection';
 import { FinalCtaSection } from '~/components/FinalCtaSection';
 import { Footer } from '~/components/Footer';
 import { StickyBuyBar } from '~/components/StickyBuyBar';
+import { SelectedVariantProvider } from '~/lib/SelectedVariantContext';
 
 const PRODUCT_QUERY = `#graphql
   query ProductByHandle($handle: String!) {
@@ -83,34 +84,36 @@ export default function Index() {
   const { product } = useLoaderData<typeof loader>();
 
   return (
-    <Layout>
-      <div className="pb-24 md:pb-28">
-        <HeroVideoCarousel />
-        <Hero />
-        <div className="container mx-auto px-4 py-8 md:py-12">
-          <BenefitsList />
+    <SelectedVariantProvider>
+      <Layout>
+        <div className="pb-24 md:pb-28">
+          <HeroVideoCarousel />
+          <Hero />
+          <div className="container mx-auto px-4 py-8 md:py-12">
+            <BenefitsList />
+          </div>
+          <div id="pricing">
+            <PricingSelectionSection product={product} />
+          </div>
+          <WhyChooseUsSection />
+          <PaymentAndTestimonialSection />
+          <ProblemSolutionSection />
+          <AntiColicBenefitsSection />
+          <SuitabilityCheckSection />
+          <BenefitsGridSection />
+          <SocialProof />
+          <HowItWorksSection />
+          <FounderStorySection />
+          <BonusProductsSection />
+          <IndependenceVideoSection />
+          <GuaranteeSection />
+          <FaqSection />
+          <FinalCtaSection />
+          <Footer />
         </div>
-        <div id="pricing">
-          <PricingSelectionSection product={product} />
-        </div>
-        <WhyChooseUsSection />
-        <PaymentAndTestimonialSection />
-        <ProblemSolutionSection />
-        <AntiColicBenefitsSection />
-        <SuitabilityCheckSection />
-        <BenefitsGridSection />
-        <SocialProof />
-        <HowItWorksSection />
-        <FounderStorySection />
-        <BonusProductsSection />
-        <IndependenceVideoSection />
-        <GuaranteeSection />
-        <FaqSection />
-        <FinalCtaSection />
-        <Footer />
-      </div>
-      <StickyBuyBar />
-    </Layout>
+        <StickyBuyBar />
+      </Layout>
+    </SelectedVariantProvider>
   );
 }
 

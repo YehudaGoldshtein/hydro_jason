@@ -3,11 +3,13 @@ import { useCheckout } from '~/lib/useCheckout';
 import { useLoaderData } from '@remix-run/react';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
+import { useSelectedVariant } from '~/lib/SelectedVariantContext';
 
 export function StickyBuyBar() {
   const [visible, setVisible] = useState(false);
   const { goToCheckout, isSubmitting } = useCheckout();
   const { product } = useLoaderData<typeof import('~/routes/_index').loader>();
+  const { selectedVariantIndex } = useSelectedVariant();
   const { productName, stockWarning, ctaButton, fallbackImageAlt } = activeContent.stickyBuyBar;
   const { stickyBuyBar: barMedia } = landingMedia;
 
@@ -23,10 +25,10 @@ export function StickyBuyBar() {
   }, []);
 
   const handleClick = () => {
-    // Get first available variant
-    const firstVariant = product?.variants?.nodes?.[0];
-    if (firstVariant?.id) {
-      goToCheckout(firstVariant.id, 1);
+    // Use the selected variant from context (default is 0 = ₪199)
+    const selectedVariant = product?.variants?.nodes?.[selectedVariantIndex];
+    if (selectedVariant?.id) {
+      goToCheckout(selectedVariant.id, 1);
     } else {
       // Fallback: scroll to pricing section
       const target = document.getElementById('pricing');

@@ -2,16 +2,19 @@ import { Star } from 'lucide-react';
 import { useCheckout } from '~/lib/useCheckout';
 import { useLoaderData } from '@remix-run/react';
 import { activeContent } from '~/configs/content-active';
+import { useSelectedVariant } from '~/lib/SelectedVariantContext';
 
 function CheckoutButton() {
   const { goToCheckout, isSubmitting } = useCheckout();
   const { product } = useLoaderData<typeof import('~/routes/_index').loader>();
+  const { selectedVariantIndex } = useSelectedVariant();
   const { ctaButton } = activeContent.antiColicBenefits;
 
   const handleCheckout = () => {
-    const firstVariant = product?.variants?.nodes?.[0];
-    if (firstVariant?.id) {
-      goToCheckout(firstVariant.id, 1);
+    // Use the selected variant from context (default is 0 = ₪199)
+    const selectedVariant = product?.variants?.nodes?.[selectedVariantIndex];
+    if (selectedVariant?.id) {
+      goToCheckout(selectedVariant.id, 1);
     }
   };
 

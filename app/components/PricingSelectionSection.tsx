@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Check, Circle, Sparkles } from 'lucide-react';
 import { useFetcher } from '@remix-run/react';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
+import { useSelectedVariant } from '~/lib/SelectedVariantContext';
 
 interface PricingOption {
   id: string;
@@ -42,8 +43,8 @@ interface PricingSelectionSectionProps {
 }
 
 export function PricingSelectionSection({ product }: PricingSelectionSectionProps) {
-  // Use numeric index instead of string IDs - default to 0 (first option)
-  const [selectedIdx, setSelectedIdx] = useState<number>(0);
+  // Use Context to share selection across all components
+  const { selectedVariantIndex: selectedIdx, setSelectedVariantIndex: setSelectedIdx } = useSelectedVariant();
   const fetcher = useFetcher<{ success: boolean; checkoutUrl?: string; error?: string }>();
   const fetcherData = fetcher.data;
   const { pricing: pricingMedia } = landingMedia;

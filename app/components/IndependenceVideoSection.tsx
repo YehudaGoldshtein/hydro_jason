@@ -2,17 +2,20 @@ import { useCheckout } from '~/lib/useCheckout';
 import { useLoaderData } from '@remix-run/react';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
+import { useSelectedVariant } from '~/lib/SelectedVariantContext';
 
 export function IndependenceVideoSection() {
   const { goToCheckout, isSubmitting } = useCheckout();
   const { product } = useLoaderData<typeof import('~/routes/_index').loader>();
+  const { selectedVariantIndex } = useSelectedVariant();
   const { heading, videoAlt, videoPlaceholder, ctaButton, paymentMethodsAlt, paymentIconsPlaceholder, avatarAlt, socialProofText } = activeContent.independenceVideo;
   const { independenceVideo: videoMedia } = landingMedia;
 
   const handleCheckout = () => {
-    const firstVariant = product?.variants?.nodes?.[0];
-    if (firstVariant?.id) {
-      goToCheckout(firstVariant.id, 1);
+    // Use the selected variant from context (default is 0 = ₪199)
+    const selectedVariant = product?.variants?.nodes?.[selectedVariantIndex];
+    if (selectedVariant?.id) {
+      goToCheckout(selectedVariant.id, 1);
     }
   };
 
