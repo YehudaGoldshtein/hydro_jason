@@ -68,7 +68,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
     const { data } = await storefrontQuery(
       PRODUCT_QUERY,
-      { handle: 'feedease' },
+      { handle: 'האכלה-קלה-ערכת' },
       {
         storeDomain: context.env.PUBLIC_STORE_DOMAIN,
         storefrontApiToken: context.env.PUBLIC_STOREFRONT_API_TOKEN,

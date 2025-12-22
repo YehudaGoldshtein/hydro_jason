@@ -162,23 +162,23 @@ export const content = {
     options: [
       {
         id: 'option1',
-        // תווית - קנה 1
-        label: 'קנה 1',
+        // תווית - ערכה 1
+        label: 'ערכה 1',
         // טקסט משלוח
         shippingText: 'משלוח חינם עד הבית',
       },
       {
         id: 'option2',
-        // תווית - קנה 2
-        label: 'קנה 2',
+        // תווית - ערכת 2
+        label: 'ערכת 2',
         // תג צף מעל הכרטיס
         floatingBadge: 'לבית ולבחוץ',
         shippingText: 'משלוח חינם עד הבית',
       },
       {
         id: 'option3',
-        // תווית - קנה 3
-        label: 'קנה 3',
+        // תווית - ערכת 3
+        label: 'ערכת 3',
         // תג צף מעל הכרטיס
         floatingBadge: 'לך ולחברה',
         shippingText: 'משלוח חינם עד הבית',
