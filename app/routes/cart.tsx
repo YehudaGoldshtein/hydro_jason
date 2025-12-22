@@ -42,6 +42,11 @@ export async function action({ request, context }: ActionFunctionArgs) {
 
   console.log('📋 Form data:', { cartAction, merchandiseId, quantity, cartId });
 
+  const apiOptions = {
+    storeDomain: context.env.PUBLIC_STORE_DOMAIN,
+    storefrontApiToken: context.env.PUBLIC_STOREFRONT_API_TOKEN,
+  };
+
   if (cartAction === 'ADD_TO_CART' && merchandiseId) {
     try {
       let checkoutUrl: string;
@@ -49,15 +54,19 @@ export async function action({ request, context }: ActionFunctionArgs) {
       if (cartId) {
         console.log('➕ Adding to existing cart:', cartId);
         // Add to existing cart
-        const { data } = await storefrontQuery(CART_LINES_ADD_MUTATION, {
-          cartId,
-          lines: [
-            {
-              merchandiseId,
-              quantity,
-            },
-          ],
-        });
+        const { data } = await storefrontQuery(
+          CART_LINES_ADD_MUTATION,
+          {
+            cartId,
+            lines: [
+              {
+                merchandiseId,
+                quantity,
+              },
+            ],
+          },
+          apiOptions
+        );
 
         console.log('📦 Cart lines add response:', data);
 
@@ -73,16 +82,20 @@ export async function action({ request, context }: ActionFunctionArgs) {
       } else {
         console.log('🆕 Creating new cart');
         // Create new cart
-        const { data } = await storefrontQuery(CART_CREATE_MUTATION, {
-          cartInput: {
-            lines: [
-              {
-                merchandiseId,
-                quantity,
-              },
-            ],
+        const { data } = await storefrontQuery(
+          CART_CREATE_MUTATION,
+          {
+            cartInput: {
+              lines: [
+                {
+                  merchandiseId,
+                  quantity,
+                },
+              ],
+            },
           },
-        });
+          apiOptions
+        );
 
         console.log('📦 Cart create response:', data);
 

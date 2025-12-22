@@ -58,11 +58,22 @@ const PRODUCT_QUERY = `#graphql
   }
 `;
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request, context }: LoaderFunctionArgs) {
   try {
-    const { data } = await storefrontQuery(PRODUCT_QUERY, {
-      handle: 'feedease',
+    console.log('🔍 LOADER: Starting product fetch');
+    console.log('🔍 LOADER: Context env:', {
+      storeDomain: context.env.PUBLIC_STORE_DOMAIN,
+      hasToken: !!context.env.PUBLIC_STOREFRONT_API_TOKEN
     });
+
+    const { data } = await storefrontQuery(
+      PRODUCT_QUERY,
+      { handle: 'feedease' },
+      {
+        storeDomain: context.env.PUBLIC_STORE_DOMAIN,
+        storefrontApiToken: context.env.PUBLIC_STOREFRONT_API_TOKEN,
+      }
+    );
 
     console.log('🔍 LOADER: Product fetched:', JSON.stringify(data.product, null, 2));
     console.log('🔍 LOADER: Variants:', data.product?.variants?.nodes?.map((v: any) => ({ id: v.id, title: v.title })));
