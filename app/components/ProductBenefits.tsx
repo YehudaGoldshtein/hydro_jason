@@ -1,9 +1,9 @@
-import { Bottle, Droplet, RefreshCw } from 'lucide-react';
+import { Package, Droplet, RefreshCw } from 'lucide-react';
 
 const benefits = [
   {
     id: 'universal-fit',
-    icon: Bottle,
+    icon: Package,
     text: 'מתאים לכל הבקבוקים',
   },
   {
