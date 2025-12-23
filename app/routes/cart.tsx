@@ -42,16 +42,6 @@ export async function action({ request, context }: ActionFunctionArgs) {
 
   console.log('📋 Form data:', { cartAction, merchandiseId, quantity, cartId });
 
-  // Check if this is a mock variant ID (for testing)
-  if (merchandiseId && merchandiseId.includes('mock-variant')) {
-    console.warn('⚠️ CART: Mock variant detected - returning demo checkout URL');
-    return json({ 
-      success: true, 
-      checkoutUrl: 'https://1tib1d-v5.myshopify.com/cart',
-      message: 'Demo mode: This would redirect to checkout'
-    });
-  }
-
   const apiOptions = {
     storeDomain: context.env.PUBLIC_STORE_DOMAIN,
     storefrontApiToken: context.env.PUBLIC_STOREFRONT_API_TOKEN,

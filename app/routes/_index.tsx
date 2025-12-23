@@ -65,29 +65,48 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     console.log('🔍 LOADER: Has PUBLIC_STOREFRONT_API_TOKEN:', !!context.env.PUBLIC_STOREFRONT_API_TOKEN);
 
     // Try using the custom storefrontQuery first
-    const { data, errors } = await storefrontQuery(
-      PRODUCT_QUERY,
-      { handle: 'האכלה-קלה-ערכת' },
-      {
-        storeDomain: context.env.PUBLIC_STORE_DOMAIN,
-        storefrontApiToken: context.env.PUBLIC_STOREFRONT_API_TOKEN,
+    // Try multiple possible handles
+    const possibleHandles = [
+      'האכלה-קלה-ערכת',
+      'האכלה-קלה',
+      'feedease',
+      'feed-ease',
+      'ערכת-האכלה-קלה'
+    ];
+
+    let data = null;
+    let errors = null;
+
+    for (const handle of possibleHandles) {
+      console.log(`🔍 Trying handle: "${handle}"`);
+      const result = await storefrontQuery(
+        PRODUCT_QUERY,
+        { handle },
+        {
+          storeDomain: context.env.PUBLIC_STORE_DOMAIN,
+          storefrontApiToken: context.env.PUBLIC_STOREFRONT_API_TOKEN,
+        }
+      );
+
+      if (result.data?.product) {
+        data = result.data;
+        console.log(`✅ Found product with handle: "${handle}"`);
+        break;
       }
-    );
+    }
+
+    if (!data) {
+      errors = ['No product found with any of the tried handles'];
+    }
 
     if (errors) {
       console.error('❌ LOADER: GraphQL errors:', errors);
-      console.warn('⚠️ LOADER: Using mock data due to GraphQL errors');
-      return json({
-        product: createMockProduct(),
-      });
+      throw new Error(`Shopify API Error: ${JSON.stringify(errors)}`);
     }
 
     if (!data?.product) {
-      console.error('❌ LOADER: Product not found');
-      console.warn('⚠️ LOADER: Using mock data as fallback');
-      return json({
-        product: createMockProduct(),
-      });
+      console.error('❌ LOADER: Product not found with handle: האכלה-קלה-ערכת');
+      throw new Error('Product not found. Please verify the product handle in your Shopify store.');
     }
 
     console.log('✅ LOADER: Product fetched successfully');
@@ -99,62 +118,9 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     });
   } catch (error) {
     console.error('❌ LOADER ERROR:', error instanceof Error ? error.message : String(error));
-    console.warn('⚠️ LOADER: Using mock data due to error');
-    
-    // Return mock product as fallback
-    return json({
-      product: createMockProduct(),
-    });
+    console.error('❌ Stack:', error instanceof Error ? error.stack : 'N/A');
+    throw error;
   }
-}
-
-// Mock product data for testing when Shopify API is not available
-function createMockProduct() {
-  return {
-    id: 'gid://shopify/Product/mock-feedease',
-    title: 'FeedEase - ערכת האכלה קלה',
-    description: 'ערכת האכלה קלה ומהירה לתינוקות',
-    variants: {
-      nodes: [
-        {
-          id: 'gid://shopify/ProductVariant/mock-variant-1',
-          title: 'קנה 1',
-          price: {
-            amount: '199.00',
-            currencyCode: 'ILS',
-          },
-          compareAtPrice: null,
-          availableForSale: true,
-        },
-        {
-          id: 'gid://shopify/ProductVariant/mock-variant-2',
-          title: 'קנה 2 וחסוך 15%',
-          price: {
-            amount: '349.00',
-            currencyCode: 'ILS',
-          },
-          compareAtPrice: {
-            amount: '399.00',
-            currencyCode: 'ILS',
-          },
-          availableForSale: true,
-        },
-        {
-          id: 'gid://shopify/ProductVariant/mock-variant-3',
-          title: 'קנה 3 וחסוך 25%',
-          price: {
-            amount: '449.00',
-            currencyCode: 'ILS',
-          },
-          compareAtPrice: {
-            amount: '599.00',
-            currencyCode: 'ILS',
-          },
-          availableForSale: true,
-        },
-      ],
-    },
-  };
 }
 
 export default function Index() {
