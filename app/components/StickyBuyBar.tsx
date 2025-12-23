@@ -57,8 +57,8 @@ export function StickyBuyBar() {
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4" dir="rtl">
           <div className="flex items-center gap-3">
             <img
-              src={product?.images?.nodes?.[0]?.url || barMedia.productImage.src}
-              alt={product?.images?.nodes?.[0]?.altText || barMedia.productImage.alt}
+              src={barMedia.productImage.src}
+              alt={barMedia.productImage.alt}
               className="w-12 h-12 rounded-full border border-border-default object-cover"
               loading="lazy"
             />

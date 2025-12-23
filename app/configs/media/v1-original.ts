@@ -1,11 +1,16 @@
 /**
  * Version 1: Media Assets (Images, Videos, Icons)
  * 
+ * ⚠️ קובץ זה הוא הקובץ הקובע והראשי לכל המדיה באתר! ⚠️
+ * 
  * כל התמונות, הסרטונים והאייקונים של הדף
  * קובץ זה מכיל רק קישורים למדיה - ללא טקסט
  * 
+ * 🎯 כל שינוי בקובץ זה ישנה את כל האתר אוטומטית!
+ * כל הקומפוננטות משתמשות בקובץ זה דרך media-active.ts
+ * 
  * Created: Dec 2025
- * Status: Original baseline version
+ * Status: Original baseline version - הקובץ הקובע הראשי
  */
 
 export const media = {
@@ -356,7 +361,7 @@ export const media = {
   stickyBuyBar: {
     // תמונה קטנה של המוצר בפס התחתון
     productImage: {
-      src: 'https://placehold.co/100x100/fff6f2/52423d?text=FE',
+      src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/1212.jpg?v=1764090881',
       alt: 'FeedEase',
     },
   },

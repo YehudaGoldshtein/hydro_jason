@@ -265,6 +265,45 @@ Before running `npx shopify hydrogen deploy`:
 - [ ] No `node:*` imports anywhere
 - [ ] All types imported from `@shopify/remix-oxygen`
 
+# Configuration Files - Source of Truth (CRITICAL)
+
+⚠️ **התיקייה `app/configs/` היא הקובעת והראשית לכל התוכן והמדיה באתר!** ⚠️
+
+## Structure
+- **`app/configs/content/`** - כל הטקסטים והתוכן של האתר
+  - `v1-original.ts` - גרסת התוכן המקורית
+  - `v2-safety.ts` - גרסת תוכן נוספת
+  - `content-active.ts` - קובע איזו גרסת תוכן פעילה (מייבא מ-v1-original או v2-safety)
+
+- **`app/configs/media/`** - כל התמונות, הסרטונים והאייקונים
+  - `v1-original.ts` - הקובץ הקובע הראשי לכל המדיה באתר
+  - `media-active.ts` - קובע איזו גרסת מדיה פעילה (מייבא מ-v1-original)
+
+- **`app/configs/theme/`** - הגדרות עיצוב וצבעים
+  - `v1-peach.ts` - גרסת עיצוב אחת
+  - `v2-medical.ts` - גרסת עיצוב נוספת
+  - `theme-active.ts` - קובע איזו גרסת עיצוב פעילה
+
+## Rules
+1. **כל שינוי בתיקיית `configs` ישנה את כל האתר אוטומטית!**
+2. **תמיד עדכן את הקבצים ב-`configs/` ולא ישירות בקומפוננטות!**
+3. **הקומפוננטות משתמשות ב-`activeContent`, `landingMedia`, `activeTheme` שמגיעים מהקבצים הפעילים**
+4. **אל תשנה קוד בקומפוננטות - שנה רק את הקבצים ב-`configs/`!**
+5. **כדי להחליף גרסה, שנה את ה-import ב-`*-active.ts`**
+
+## Example Flow
+```
+app/configs/media/v1-original.ts (הקובץ הקובע)
+    ↓
+app/configs/media-active.ts (מייבא את v1-original)
+    ↓
+landingMedia (מייצא לכל הקומפוננטות)
+    ↓
+כל הקומפוננטות באתר משתמשות ב-landingMedia
+```
+
+**🎯 זכור: כל שינוי ב-`configs/` = שינוי מיידי באתר!**
+
 # Notes
 
 - This project uses Shopify Hydrogen, which is built on Remix.
