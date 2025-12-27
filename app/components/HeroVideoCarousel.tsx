@@ -15,6 +15,8 @@ export function HeroVideoCarousel() {
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const outerContainerRef = useRef<HTMLDivElement>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
   const { slides: slidesData, ariaLabels, placeholders } = activeContent.heroVideoCarousel;
   const mediaSlides = landingMedia.heroVideoCarousel.slides;
 
@@ -85,27 +87,94 @@ export function HeroVideoCarousel() {
   // Check if current slide is a video
   const isCurrentSlideVideo = slides[currentSlide]?.type === 'video' && slides[currentSlide]?.src;
 
+  // #region agent log
+  useEffect(() => {
+    const logElementSizes = () => {
+      const outer = outerContainerRef.current;
+      const carousel = carouselRef.current;
+      
+      if (outer && carousel) {
+        const outerRect = outer.getBoundingClientRect();
+        const carouselRect = carousel.getBoundingClientRect();
+        const outerComputedStyle = getComputedStyle(outer);
+        
+        fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            location: 'HeroVideoCarousel.tsx:useEffect',
+            message: 'Element dimensions measured - no white container',
+            data: {
+              outerContainer: { 
+                width: outerRect.width, 
+                height: outerRect.height, 
+                top: outerRect.top,
+                left: outerRect.left, 
+                right: outerRect.right,
+                bottom: outerRect.bottom,
+                maxWidth: outerComputedStyle.maxWidth,
+                paddingTop: outerComputedStyle.paddingTop
+              },
+              carousel: { 
+                width: carouselRect.width, 
+                height: carouselRect.height,
+                top: carouselRect.top,
+                left: carouselRect.left, 
+                right: carouselRect.right,
+                bottom: carouselRect.bottom
+              },
+              windowWidth: window.innerWidth,
+              windowHeight: window.innerHeight,
+              overflows: {
+                carouselOverflowsRight: carouselRect.right > outerRect.right,
+                carouselOverflowsLeft: carouselRect.left < outerRect.left,
+                carouselOverflowsTop: carouselRect.top < 0
+              }
+            },
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'post-fix-2',
+            hypothesisId: 'A'
+          })
+        }).catch(() => {});
+      }
+    };
+    
+    logElementSizes();
+    window.addEventListener('resize', logElementSizes);
+    const timeout = setTimeout(logElementSizes, 100);
+    
+    return () => {
+      window.removeEventListener('resize', logElementSizes);
+      clearTimeout(timeout);
+    };
+  }, [currentSlide]);
+  // #endregion
+
   return (
-    <section className="bg-bg-page py-0" dir="rtl">
-      <div className="container mx-auto px-4 md:px-8 py-5">
-        <div className="max-w-[500px] sm:max-w-[600px] lg:max-w-[650px] mx-auto" style={{ 
-          perspective: '2500px',
-          perspectiveOrigin: '50% 50%'
+    <section className="bg-bg-page py-0 overflow-visible" dir="rtl">
+      <div className="w-full px-4 md:px-8" style={{ overflow: 'visible', paddingTop: '15%', paddingBottom: '5%' }}>
+        <div ref={outerContainerRef} className="mx-auto" style={{ 
+          maxWidth: 'min(calc(100vw - 2rem), 1560px)',
+          perspective: '3250px',
+          perspectiveOrigin: '50% 50%',
+          overflow: 'visible'
         }}>
-          {/* Carousel Container */}
-          <div className="relative bg-white rounded-2xl overflow-hidden shadow-[0_6px_20px_rgba(0,0,0,0.08)]">
-            {/* Slides - 3D Cube Container */}
-            <div className="relative aspect-square overflow-hidden" style={{ 
-              perspective: '2500px',
-              transformStyle: 'preserve-3d'
-            }}>
+          {/* Slides - 3D Cube Container */}
+          <div ref={carouselRef} className="relative overflow-hidden w-full" style={{
+            aspectRatio: '1 / 1',
+            transform: 'scale(1.3)',
+            transformOrigin: 'center center',
+            perspective: '3250px',
+            transformStyle: 'preserve-3d'
+          }}>
               {slides.map((slide, index) => {
                 const isActive = index === currentSlide;
                 const slideOffset = index - currentSlide;
                 
                 // Calculate 3D cube rotation - each slide rotates 90 degrees
                 const rotateY = slideOffset * 90;
-                const translateZ = -600; // Deep 3D effect - much more depth!
+                const translateZ = -780; // Deep 3D effect - much more depth! (increased by 30%)
                 
                 // Scale effect - non-active slides are smaller for depth perception
                 const scale = Math.abs(slideOffset) === 0 ? 1 : 0.7;
@@ -116,11 +185,11 @@ export function HeroVideoCarousel() {
                 // Calculate z-index - active slide on top
                 const zIndex = 10 - Math.abs(slideOffset);
                 
-                // Enhanced shadow for strong 3D effect
+                // Minimal shadow for 3D effect - no bottom shadow
                 const shadowDepth = Math.abs(slideOffset);
-                const shadowIntensity = isActive ? 0.25 : 0.1;
-                const boxShadow = `0 ${20 + shadowDepth * 30}px ${60 + shadowDepth * 50}px rgba(0, 0, 0, ${shadowIntensity}), 
-                                   0 0 0 1px rgba(224, 122, 99, ${0.15 + shadowDepth * 0.05})`;
+                const shadowIntensity = isActive ? 0.15 : 0.05;
+                const boxShadow = `0 2px 8px rgba(0, 0, 0, ${shadowIntensity * 0.5}), 
+                                   0 0 0 1px rgba(224, 122, 99, ${0.1 + shadowDepth * 0.03})`;
                 
                 return (
                   <div
@@ -193,70 +262,107 @@ export function HeroVideoCarousel() {
               })}
             </div>
 
-            {/* Navigation Arrows */}
-            <button
-              onClick={prevSlide}
-              className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
-              aria-label={ariaLabels.previous}
-            >
-              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
-            </button>
+          {/* Navigation Arrows */}
+          <button
+            onClick={prevSlide}
+            className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95 z-20"
+            aria-label={ariaLabels.previous}
+          >
+            <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
+          </button>
 
-            <button
-              onClick={nextSlide}
-              className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
-              aria-label={ariaLabels.next}
-            >
-              <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
-            </button>
+          <button
+            onClick={nextSlide}
+            className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95 z-20"
+            aria-label={ariaLabels.next}
+          >
+            <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
+          </button>
 
-            {/* Video Controls - Only show for video slides */}
-            {isCurrentSlideVideo && (
-              <div className="absolute bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-3">
-                {/* Play/Pause Button */}
-                <button
-                  onClick={togglePlayPause}
-                  className="bg-white/90 hover:bg-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
-                  aria-label={isPlaying ? 'עצור' : 'נגן'}
-                >
-                  {isPlaying ? (
-                    <Pause className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
-                  ) : (
-                    <Play className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
-                  )}
-                </button>
+          {/* Video Controls - Only show for video slides */}
+          {isCurrentSlideVideo && (
+            <div className="absolute bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-3 z-20">
+              {/* Play/Pause Button */}
+              <button
+                onClick={togglePlayPause}
+                className="bg-white/90 hover:bg-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
+                aria-label={isPlaying ? 'עצור' : 'נגן'}
+              >
+                {isPlaying ? (
+                  <Pause className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
+                ) : (
+                  <Play className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
+                )}
+              </button>
 
-                {/* Mute/Unmute Button */}
-                <button
-                  onClick={toggleMute}
-                  className="bg-white/90 hover:bg-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
-                  aria-label={isMuted ? 'הפעל סאונד' : 'כבה סאונד'}
-                >
-                  {isMuted ? (
-                    <VolumeX className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
-                  ) : (
-                    <Volume2 className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
-                  )}
-                </button>
-              </div>
-            )}
-
-            {/* Pagination Dots */}
-            <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
-              {slides.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => goToSlide(index)}
-                  className={`transition-all ${
-                    index === currentSlide
-                      ? 'w-8 h-2 bg-white'
-                      : 'w-2 h-2 bg-white/50 hover:bg-white/75'
-                  } rounded-full`}
-                  aria-label={`${ariaLabels.goToSlide} ${index + 1}`}
-                />
-              ))}
+              {/* Mute/Unmute Button */}
+              <button
+                onClick={toggleMute}
+                className="bg-white/90 hover:bg-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
+                aria-label={isMuted ? 'הפעל סאונד' : 'כבה סאונד'}
+              >
+                {isMuted ? (
+                  <VolumeX className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
+                ) : (
+                  <Volume2 className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
+                )}
+              </button>
             </div>
+          )}
+
+          {/* Pagination Dots */}
+          <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToSlide(index)}
+                className={`transition-all ${
+                  index === currentSlide
+                    ? 'w-8 h-2 bg-white'
+                    : 'w-2 h-2 bg-white/50 hover:bg-white/75'
+                } rounded-full`}
+                aria-label={`${ariaLabels.goToSlide} ${index + 1}`}
+              />
+            ))}
           </div>
+        </div>
+
+        {/* Thumbnails */}
+        <div className="mt-6 md:mt-8 flex justify-center items-center gap-3 md:gap-4 overflow-x-auto pb-2">
+          {slides.map((slide, index) => (
+            <button
+              key={slide.id}
+              onClick={() => goToSlide(index)}
+              className={`relative flex-shrink-0 transition-all ${
+                index === currentSlide
+                  ? 'ring-2 ring-primary-main ring-offset-2 scale-105'
+                  : 'opacity-60 hover:opacity-100 hover:scale-105'
+              } rounded-lg overflow-hidden`}
+              aria-label={`${ariaLabels.goToSlide} ${index + 1}`}
+            >
+              {slide.type === 'video' && slide.src ? (
+                <video
+                  className="w-16 h-16 md:w-20 md:h-20 object-cover"
+                  src={slide.src}
+                  muted
+                  playsInline
+                />
+              ) : slide.src ? (
+                <img
+                  src={slide.src}
+                  alt={slide.alt}
+                  className="w-16 h-16 md:w-20 md:h-20 object-cover"
+                />
+              ) : (
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-primary-light to-primary-lighter flex items-center justify-center">
+                  <span className="text-xs">?</span>
+                </div>
+              )}
+              {index === currentSlide && (
+                <div className="absolute inset-0 bg-primary-main/10 pointer-events-none"></div>
+              )}
+            </button>
+          ))}
         </div>
       </div>
     </section>

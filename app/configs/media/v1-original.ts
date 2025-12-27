@@ -43,19 +43,25 @@ export const media = {
         id: 3,
         type: 'image' as const,
         // תמונה שלישית - מבט מקרוב על המוצר
-        src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/Gemini_Generated_Image_cdykbwcdykbwcdyk.png?v=1766835484',
+        src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/94931a8da7aabc634b20c20b15ac887a.png?v=1766836560',
       },
       {
         id: 4,
         type: 'image' as const,
-        // תמונה רביעית - תינוק רגוע
-        src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/4_9cc9a0c2-de10-41ea-916e-cc50e627b15d.png?v=1766835592',
+        // תמונה רביעית
+        src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/2.png?v=1766835643',
       },
       {
         id: 5,
         type: 'image' as const,
-        // תמונה חמישית - שימוש יומיומי
-        src: 'https://images.unsplash.com/photo-1515488042361-ee00e0d4d8be?w=800&h=800&fit=crop&q=80',
+        // תמונה חמישית
+        src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/44809d7bbfebc178e519056844c32eb5.svg?v=1766841204',
+      },
+      {
+        id: 6,
+        type: 'image' as const,
+        // תמונה שישית
+        src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/1212.jpg?v=1764090881',
       },
     ],
   },
@@ -129,12 +135,12 @@ export const media = {
   problemSolution: {
     // תמונה של בעיה - אמא עם כאבי גב
     problemImage: {
-      src: 'https://placehold.co/600x400/fff6f2/52423d?text=Problem+Image',
+      src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/download_5.jpg?v=1766842943',
       alt: 'תמונת בעיה - אמא עם כאבי גב',
     },
     // וידאו הסבר על הפתרון
     solutionVideo: {
-      src: 'https://example.com/solution-video.mp4',
+      src: 'https://cdn.shopify.com/videos/c/o/v/2b07232f7ebe4b508f007a08b43eef11.mp4',
       thumbnail: 'https://placehold.co/600x400/fff6f2/52423d?text=Solution+Video',
       alt: 'וידאו הדגמה של הפתרון',
     },
@@ -156,7 +162,7 @@ export const media = {
         id: 1,
         // תמונה - ידיים חופשיות
         image: {
-          src: 'https://cdn.shopify.com/s/files/1/0661/6416/2608/files/unnamed_10.jpg?v=1766316637',
+          src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/Gemini_Generated_Image_mhvgp4mhvgp4mhvg.png?v=1766844245',
           alt: 'ביי ביי לכאבי ידיים',
         },
       },
@@ -164,7 +170,7 @@ export const media = {
         id: 2,
         // תמונה - תאומים
         image: {
-          src: 'https://placehold.co/600x400/fff6f2/52423d?text=Twins',
+          src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/Gemini_Generated_Image_i7jqisi7jqisi7jq.png?v=1766844248',
           alt: 'הצלה להורי תאומים',
         },
       },
@@ -172,7 +178,7 @@ export const media = {
         id: 3,
         // תמונה - תינוק רגוע ללא גזים
         image: {
-          src: 'https://placehold.co/600x400/fff6f2/52423d?text=Less+Gas',
+          src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/unnamed.jpg?v=1766844230',
           alt: 'פחות גזים יותר שלווה',
         },
       },
@@ -180,7 +186,7 @@ export const media = {
         id: 4,
         // תמונה - כרית ניידת
         image: {
-          src: 'https://placehold.co/600x400/fff6f2/52423d?text=Portable',
+          src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/Gemini_Generated_Image_cuichycuichycuic.png?v=1766844379',
           alt: 'קלה וניידת לכל מקום',
         },
       },
@@ -188,7 +194,7 @@ export const media = {
         id: 5,
         // תמונה - לא עוד אלתורים
         image: {
-          src: 'https://placehold.co/600x400/fff6f2/52423d?text=No+DIY',
+          src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/1111.jpg?v=1766844230',
           alt: 'די לאלתורים',
         },
       },
@@ -196,7 +202,7 @@ export const media = {
         id: 6,
         // תמונה - עצמאות לתינוק
         image: {
-          src: 'https://placehold.co/600x400/fff6f2/52423d?text=Independence',
+          src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/3333.png?v=1766844468',
           alt: 'צעד ראשון לעצמאות',
         },
       },
@@ -295,26 +301,26 @@ export const media = {
     products: [
       {
         id: 1,
-        // תמונת ידיות אוניברסליות
+        // תמונת הכרית החכמה
         image: {
-          src: 'https://placehold.co/400x400/fff6f2/52423d?text=Universal+Handles',
-          alt: 'ידיות אוניברסליות',
+          src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/44809d7bbfebc178e519056844c32eb5.svg?v=1766841204',
+          alt: 'הכרית החכמה',
         },
       },
       {
         id: 2,
         // תמונת מחזיק בקבוק לעגלה
         image: {
-          src: 'https://placehold.co/400x400/fff6f2/52423d?text=Stroller+Holder',
+          src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/O1CN014CsOE41a5N8pLhT0J__2212488763278-0-cib.jpg?v=1766846288',
           alt: 'מחזיק בקבוק לעגלה',
         },
       },
       {
         id: 3,
-        // תמונת הכרית החכמה
+        // תמונת ידיות אוניברסליות
         image: {
-          src: 'https://placehold.co/400x400/fff6f2/52423d?text=Smart+Pillow',
-          alt: 'הכרית החכמה',
+          src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/6.gif?v=1766842103',
+          alt: 'ידיות אוניברסליות',
         },
       },
     ],
@@ -330,7 +336,7 @@ export const media = {
     },
     // אמצעי תשלום
     paymentIcons: {
-      src: 'https://placehold.co/400x80/fff6f2/52423d?text=Payment+Icons+Image',
+      src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/Gemini_Generated_Image_5l3r7p5l3r7p5l3r.png?v=1766847146',
       alt: 'אמצעי תשלום',
     },
     // אווטרים של לקוחות מרוצים

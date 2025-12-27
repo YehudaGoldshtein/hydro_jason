@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Check, Circle, Sparkles, Star, CheckCircle2, ThumbsUp } from 'lucide-react';
+import { Check, Circle, Sparkles, Star, CheckCircle2, ThumbsUp, Truck } from 'lucide-react';
 import { useFetcher } from '@remix-run/react';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
@@ -184,7 +184,7 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
   };
 
   return (
-    <section className="bg-bg-page py-12 md:py-16" dir="rtl">
+    <section className="bg-bg-page pt-0 pb-12 md:pb-16" dir="rtl">
       <div className="container mx-auto px-4 md:px-8">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold text-center text-text-primary mb-8 md:mb-12">
@@ -278,7 +278,7 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
           <button
             type="button"
             onClick={handleAddToCart}
-            className="w-full bg-gradient-to-r from-gradient-from via-gradient-via to-gradient-to text-white font-bold text-base md:text-lg py-3.5 md:py-4 px-8 rounded-full shadow-[0_6px_16px_rgba(224,122,99,0.35)] hover:shadow-[0_8px_20px_rgba(224,122,99,0.45)] transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            className="w-full bg-gradient-to-r from-gradient-from via-gradient-via to-gradient-to text-white font-bold text-base md:text-lg py-3.5 md:py-4 px-8 rounded-full btn-3d-primary transition-all cursor-pointer"
           >
             {fetcher.state === 'submitting' ? ctaButton.submitting : ctaButton.default}
           </button>
@@ -289,6 +289,49 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
               <strong>שגיאה:</strong> {fetcher.data.error}
             </div>
           )}
+
+          {/* Free Shipping with Stars */}
+          <div className="mt-4 flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2 text-text-primary">
+              <div className="relative">
+                <Truck className="w-5 h-5 text-primary-main" strokeWidth={2} />
+                {/* Smoke particles coming from exhaust */}
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 pointer-events-none">
+                  <div 
+                    className="w-1 h-1 bg-primary-main/40 rounded-full absolute"
+                    style={{
+                      animation: 'smokeRise 2s ease-out infinite',
+                      animationDelay: '0s',
+                    }}
+                  />
+                  <div 
+                    className="w-1 h-1 bg-primary-main/30 rounded-full absolute"
+                    style={{
+                      animation: 'smokeRise 2s ease-out infinite',
+                      animationDelay: '0.3s',
+                    }}
+                  />
+                  <div 
+                    className="w-0.5 h-0.5 bg-primary-main/50 rounded-full absolute"
+                    style={{
+                      animation: 'smokeRise 2.2s ease-out infinite',
+                      animationDelay: '0.6s',
+                    }}
+                  />
+                </div>
+              </div>
+              <span className="text-sm md:text-base font-medium">משלוח חינם עד הבית</span>
+            </div>
+            <div className="flex items-center gap-1">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className="w-4 h-4 fill-ui-star text-ui-star"
+                  strokeWidth={0}
+                />
+              ))}
+            </div>
+          </div>
 
           {/* Payment Logos */}
           <div className="mt-6 flex justify-center">

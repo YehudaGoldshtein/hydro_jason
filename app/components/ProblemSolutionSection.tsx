@@ -107,19 +107,34 @@ export function ProblemSolutionSection({
             <div className="flex justify-center">
               <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
                 {/* Video Option - Reduced height by 30% */}
-                <div className="relative bg-gradient-to-br from-primary-light to-primary-lighter" style={{ aspectRatio: '9/11.2' }}>
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="text-center text-white px-6">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/20 flex items-center justify-center">
-                        <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M8 5v14l11-7z"/>
-                        </svg>
+                {sectionMedia.solutionVideo.src ? (
+                  <video
+                    className="w-full h-full object-cover"
+                    style={{ aspectRatio: '9/11.2' }}
+                    autoPlay
+                    loop
+                    playsInline
+                    muted
+                    controls
+                  >
+                    <source src={sectionMedia.solutionVideo.src} type="video/mp4" />
+                    {videoPlaceholder.title}
+                  </video>
+                ) : (
+                  <div className="relative bg-gradient-to-br from-primary-light to-primary-lighter" style={{ aspectRatio: '9/11.2' }}>
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="text-center text-white px-6">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/20 flex items-center justify-center">
+                          <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                          </svg>
+                        </div>
+                        <p className="text-xl font-bold mb-2">{videoPlaceholder.title}</p>
+                        <p className="text-sm opacity-75">{videoPlaceholder.subtitle}</p>
                       </div>
-                      <p className="text-xl font-bold mb-2">{videoPlaceholder.title}</p>
-                      <p className="text-sm opacity-75">{videoPlaceholder.subtitle}</p>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>

@@ -6,7 +6,7 @@ export function BenefitsGridSection() {
   const { benefitsGrid: benefitsMedia } = landingMedia;
 
   return (
-    <section className="bg-bg-page py-12 md:py-16 lg:py-20" dir="rtl">
+    <section className="bg-bg-page py-8 md:py-10 lg:py-12" dir="rtl">
       <div className="container mx-auto px-4 md:px-8">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold text-center text-text-primary mb-8 md:mb-10">

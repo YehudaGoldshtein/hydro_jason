@@ -5,15 +5,17 @@ export function SocialProof() {
   const { badge, heading, subheading, verifiedPurchase, likeButton, replyButton, reviews } = activeContent.socialProof;
 
   return (
-    <section className="bg-bg-page py-12 md:py-16 lg:py-20" dir="rtl">
+    <section className="bg-bg-page py-8 md:py-10 lg:py-12" dir="rtl">
       <div className="container mx-auto px-4 md:px-8">
         <div className="max-w-6xl mx-auto mb-6 md:mb-8 text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
             {heading}
           </h2>
-          <p className="text-base md:text-lg text-text-secondary mt-2 max-w-3xl mx-auto">
-            {subheading}
-          </p>
+          {subheading && (
+            <p className="text-base md:text-lg text-text-secondary mt-2 max-w-3xl mx-auto">
+              {subheading}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">

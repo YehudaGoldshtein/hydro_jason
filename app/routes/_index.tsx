@@ -10,17 +10,17 @@ import { BonusGiftsSection } from '~/components/BonusGiftsSection';
 import { BenefitsList } from '~/components/BenefitsList';
 import { PricingSelectionSection } from '~/components/PricingSelectionSection';
 import { ProblemSolutionSection } from '~/components/ProblemSolutionSection';
-import { AntiColicBenefitsSection } from '~/components/AntiColicBenefitsSection';
 import { BenefitsGridSection } from '~/components/BenefitsGridSection';
 import { SuitabilityCheckSection } from '~/components/SuitabilityCheckSection';
 import { SocialProof } from '~/components/SocialProof';
 import { FounderStorySection } from '~/components/FounderStorySection';
-import { BonusProductsSection } from '~/components/BonusProductsSection';
 import { IndependenceVideoSection } from '~/components/IndependenceVideoSection';
 import { FaqSection } from '~/components/FaqSection';
 import { FinalCtaSection } from '~/components/FinalCtaSection';
 import { Footer } from '~/components/Footer';
+import { DecorativeDivider } from '~/components/DecorativeDivider';
 import { StickyBuyBar } from '~/components/StickyBuyBar';
+import { LiveVisitorsCounter } from '~/components/LiveVisitorsCounter';
 import { SelectedVariantProvider } from '~/lib/SelectedVariantContext';
 
 const PRODUCT_QUERY = `#graphql
@@ -128,6 +128,7 @@ export default function Index() {
   return (
     <SelectedVariantProvider>
       <Layout>
+        <LiveVisitorsCounter />
         <div className="pb-24 md:pb-28">
           <HeroVideoCarousel />
           <ProductHeroSection />
@@ -137,16 +138,20 @@ export default function Index() {
           <div id="pricing">
             <PricingSelectionSection product={product} />
           </div>
+          <DecorativeDivider />
           <ProblemSolutionSection />
-          <AntiColicBenefitsSection />
+          <DecorativeDivider />
           <SuitabilityCheckSection />
           <BenefitsGridSection />
           <IndependenceVideoSection />
+          <DecorativeDivider />
           <SocialProof />
+          <DecorativeDivider />
           <FounderStorySection />
-          <BonusProductsSection />
           <FinalCtaSection />
+          <DecorativeDivider />
           <FaqSection />
+          <DecorativeDivider />
           <Footer />
         </div>
         <StickyBuyBar />

@@ -6,8 +6,10 @@ export interface ImageCarouselImage {
   src: string;
   alt: string;
   title?: string;
+  description?: string;
   width?: number;
   height?: number;
+  price?: string;
 }
 
 interface ImageCarouselProps {
@@ -171,6 +173,16 @@ export function ImageCarousel({
             </h3>
           )}
           
+          {/* Description */}
+          {currentImage.description && (
+            <p 
+              key={`description-${currentImage.id}`}
+              className="text-sm md:text-base text-text-secondary text-center max-w-md"
+            >
+              {currentImage.description}
+            </p>
+          )}
+          
           {/* Image */}
           <div className="w-full flex justify-center">
             <div
@@ -209,6 +221,21 @@ export function ImageCarousel({
                 loading="lazy"
                 className="w-full h-auto object-cover transition-opacity duration-500 relative z-10"
               />
+              
+              {/* Premium Price Badge - Right side (RTL) */}
+              {currentImage.price && (
+                <div 
+                  className="absolute top-4 right-4 z-20 bg-gradient-to-br from-[#e07a63] via-[#e79a7b] to-[#e9a481] text-white px-4 py-2.5 rounded-2xl shadow-[0_8px_24px_rgba(224,122,99,0.4),0_4px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.3)] border border-white/20 transform rotate-[-3deg] hover:rotate-0 transition-transform duration-300"
+                  style={{
+                    textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                  }}
+                >
+                  <div className="flex flex-col items-center leading-tight">
+                    <span className="text-[10px] md:text-xs font-medium opacity-90">בשווי</span>
+                    <span className="text-base md:text-lg font-bold">{currentImage.price}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

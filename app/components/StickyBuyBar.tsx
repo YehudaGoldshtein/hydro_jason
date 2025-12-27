@@ -71,7 +71,7 @@ export function StickyBuyBar() {
             type="button"
             onClick={handleClick}
             disabled={isSubmitting}
-            className="bg-gradient-to-r from-gradient-from via-gradient-via to-gradient-to text-white font-bold text-sm md:text-base px-6 py-2 rounded-full shadow-[0_6px_16px_rgba(224,122,99,0.35)] hover:shadow-[0_8px_20px_rgba(224,122,99,0.45)] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-gradient-to-r from-gradient-from via-gradient-via to-gradient-to text-white font-bold text-sm md:text-base px-6 py-2 rounded-full btn-3d-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-[0_6px_16px_rgba(224,122,99,0.35)]"
           >
             {isSubmitting ? ctaButton.submitting : ctaButton.default}
           </button>

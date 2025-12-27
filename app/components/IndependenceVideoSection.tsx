@@ -22,23 +22,8 @@ export function IndependenceVideoSection() {
   };
 
   return (
-    <section className="bg-bg-page py-16 px-4" dir="rtl">
+    <section className="bg-bg-page py-8 md:py-10 px-4" dir="rtl">
       <div className="max-w-md mx-auto flex flex-col items-center text-center gap-6">
-        <h2 className="text-xl md:text-2xl font-bold text-text-primary leading-tight">
-          {heading}
-        </h2>
-
-        <div className="w-full">
-          <div className="aspect-[9/16] rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
-            <img
-              src={videoMedia.video.thumbnail}
-              alt={videoMedia.video.alt}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          </div>
-        </div>
-
         {/* Guarantee Section */}
         <div 
           className="w-full max-w-3xl mx-auto bg-white rounded-3xl p-8 md:p-12 flex flex-col items-center text-center gap-4 relative"
@@ -85,7 +70,7 @@ export function IndependenceVideoSection() {
           type="button"
           onClick={handleCheckout}
           disabled={isSubmitting}
-          className="w-full bg-gradient-to-r from-gradient-from via-gradient-via to-gradient-to text-white font-bold text-base md:text-lg py-3.5 md:py-4 px-8 rounded-full shadow-[0_6px_16px_rgba(224,122,99,0.35)] hover:shadow-[0_8px_20px_rgba(224,122,99,0.45)] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-gradient-to-r from-gradient-from via-gradient-via to-gradient-to text-white font-bold text-base md:text-lg py-3.5 md:py-4 px-8 rounded-full btn-3d-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-[0_6px_16px_rgba(224,122,99,0.35)]"
         >
           {isSubmitting ? ctaButton.submitting : ctaButton.default}
         </button>
@@ -117,7 +102,13 @@ export function IndependenceVideoSection() {
             {/* Free Shipping Badge */}
             <div className="flex items-center gap-2 mt-3 px-4 py-2.5 bg-gradient-to-r from-primary-lighter/20 to-primary-light/20 rounded-full border border-primary-lighter shadow-sm">
               <div className="flex items-center gap-1.5">
-                <Truck className="w-4 h-4 text-primary-main flex-shrink-0" strokeWidth={2.5} />
+                <Truck 
+                  className="w-4 h-4 text-primary-main flex-shrink-0" 
+                  strokeWidth={2.5}
+                  style={{
+                    animation: 'truckDriving 2s ease-in-out infinite',
+                  }}
+                />
                 <span className="text-xs md:text-sm font-bold text-primary-main">
                   משלוח עד הבית חינם
                 </span>
