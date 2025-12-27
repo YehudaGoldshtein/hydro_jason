@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
 
@@ -12,8 +12,6 @@ interface Slide {
 
 export function HeroVideoCarousel() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [hoveredSlideIndex, setHoveredSlideIndex] = useState<number | null>(null);
   const { slides: slidesData, ariaLabels, placeholders } = activeContent.heroVideoCarousel;
   const mediaSlides = landingMedia.heroVideoCarousel.slides;
 
@@ -34,53 +32,56 @@ export function HeroVideoCarousel() {
     setCurrentSlide(index);
   };
 
-  // Auto-advance slides every 5 seconds when playing
-  useEffect(() => {
-    if (!isPlaying) return;
-    
-    const interval = setInterval(() => {
-      nextSlide();
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [isPlaying, currentSlide]);
-
   return (
     <section className="bg-bg-page py-0" dir="rtl">
       <div className="container mx-auto px-4 md:px-8 py-5">
-        <div className="max-w-[500px] sm:max-w-[600px] lg:max-w-[650px] mx-auto" style={{ perspective: '1200px' }}>
+        <div className="max-w-[500px] sm:max-w-[600px] lg:max-w-[650px] mx-auto" style={{ 
+          perspective: '2500px',
+          perspectiveOrigin: '50% 50%'
+        }}>
           {/* Carousel Container */}
           <div className="relative bg-white rounded-2xl overflow-hidden shadow-[0_6px_20px_rgba(0,0,0,0.08)]">
-            {/* Slides */}
-            <div className="relative aspect-square" style={{ perspective: '1000px' }}>
+            {/* Slides - 3D Cube Container */}
+            <div className="relative aspect-square overflow-hidden" style={{ 
+              perspective: '2500px',
+              transformStyle: 'preserve-3d'
+            }}>
               {slides.map((slide, index) => {
                 const isActive = index === currentSlide;
-                const isHovered = hoveredSlideIndex === index && isActive;
+                const slideOffset = index - currentSlide;
                 
-                // Calculate rotation - only for active slide
-                const rotateY = isActive ? (isHovered ? 3 : 0) : 0;
+                // Calculate 3D cube rotation - each slide rotates 90 degrees
+                const rotateY = slideOffset * 90;
+                const translateZ = -600; // Deep 3D effect - much more depth!
                 
-                // Calculate shadow based on rotation
-                const shadowIntensity = Math.abs(rotateY) * 0.015;
-                const boxShadow = isActive
-                  ? `0 ${8 + shadowIntensity * 15}px ${25 + shadowIntensity * 25}px rgba(0, 0, 0, ${0.1 + shadowIntensity}), 0 0 0 1px rgba(224, 122, 99, ${0.05 + shadowIntensity * 0.1})`
-                  : 'none';
+                // Scale effect - non-active slides are smaller for depth perception
+                const scale = Math.abs(slideOffset) === 0 ? 1 : 0.7;
+                
+                // Only show active and adjacent slides for performance
+                const opacity = Math.abs(slideOffset) <= 1 ? 1 : 0;
+                
+                // Calculate z-index - active slide on top
+                const zIndex = 10 - Math.abs(slideOffset);
+                
+                // Enhanced shadow for strong 3D effect
+                const shadowDepth = Math.abs(slideOffset);
+                const shadowIntensity = isActive ? 0.25 : 0.1;
+                const boxShadow = `0 ${20 + shadowDepth * 30}px ${60 + shadowDepth * 50}px rgba(0, 0, 0, ${shadowIntensity}), 
+                                   0 0 0 1px rgba(224, 122, 99, ${0.15 + shadowDepth * 0.05})`;
                 
                 return (
                   <div
                     key={slide.id}
-                    className={`absolute inset-0 transition-all duration-500 ${
-                      isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                    }`}
-                    onMouseEnter={() => isActive && setHoveredSlideIndex(index)}
-                    onMouseLeave={() => setHoveredSlideIndex(null)}
-                    onTouchStart={() => isActive && setHoveredSlideIndex(index)}
-                    onTouchEnd={() => setHoveredSlideIndex(null)}
+                    className="absolute inset-0"
                     style={{
-                      transform: isActive ? `rotateY(${rotateY}deg)` : 'none',
+                      transform: `rotateY(${rotateY}deg) translateZ(${translateZ}px) scale(${scale})`,
                       transformStyle: 'preserve-3d',
                       backfaceVisibility: 'hidden',
+                      opacity,
+                      zIndex,
+                      transition: 'transform 800ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                       boxShadow,
+                      filter: isActive ? 'brightness(1)' : 'brightness(0.6)',
                     }}
                   >
                   {slide.type === 'video' ? (
@@ -149,19 +150,6 @@ export function HeroVideoCarousel() {
               aria-label={ariaLabels.next}
             >
               <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
-            </button>
-
-            {/* Play/Pause Button (Optional - for better UX) */}
-            <button
-              onClick={() => setIsPlaying(!isPlaying)}
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-text-primary/70 hover:bg-text-primary/90 w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95 opacity-0 hover:opacity-100"
-              aria-label={isPlaying ? ariaLabels.pause : ariaLabels.play}
-            >
-              {isPlaying ? (
-                <Pause className="w-6 h-6 md:w-8 md:h-8 text-white" fill="white" />
-              ) : (
-                <Play className="w-6 h-6 md:w-8 md:h-8 text-white" fill="white" />
-              )}
             </button>
 
             {/* Pagination Dots */}

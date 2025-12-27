@@ -19,20 +19,46 @@ export function Header() {
           <div className="flex items-center flex-shrink-0">
             <Link to="/cart" className="relative p-2 hover:bg-gray-50 rounded-lg transition-colors">
               <ShoppingCart className="h-6 w-6 text-text-primary" strokeWidth={2} />
-              <span className="absolute -top-1 -right-1 bg-primary-main text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                {global.cartCount}
-              </span>
+              {(global.cartCount ?? 0) > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary-main text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {global.cartCount}
+                </span>
+              )}
             </Link>
           </div>
 
           {/* Logo - Center */}
           <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center">
-            <Link to="/" className="flex items-center">
-              <img 
-                src={headerMedia.logo.src} 
-                alt={headerMedia.logo.alt}
-                className="h-12 md:h-16 w-auto max-h-[60px] md:max-h-[80px]"
-              />
+            <Link to="/" className="flex items-center group">
+              <div className="relative" style={{ perspective: '1200px', transformStyle: 'preserve-3d' }}>
+                {/* Animated Glow effect behind logo */}
+                <div 
+                  className="absolute inset-0 blur-xl transition-opacity duration-300"
+                  style={{
+                    background: 'radial-gradient(circle, rgba(224, 122, 99, 0.7) 0%, rgba(242, 160, 133, 0.4) 50%, transparent 70%)',
+                    animation: 'glowPulse 3s ease-in-out infinite',
+                    transform: 'translateZ(-50px)',
+                  }}
+                />
+                {/* Logo with 3D effect and animated glow - Wide */}
+                <img 
+                  src={headerMedia.logo.src} 
+                  alt={headerMedia.logo.alt}
+                  className="h-14 w-auto md:h-16 md:w-auto max-w-[140px] md:max-w-[160px] relative z-10 transition-all duration-500 rounded-lg object-contain"
+                  style={{
+                    transformStyle: 'preserve-3d',
+                    transform: 'perspective(1200px) rotateY(-8deg) rotateX(2deg) translateZ(20px)',
+                    animation: 'logoGlow 3s ease-in-out infinite',
+                    backfaceVisibility: 'hidden',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'perspective(1200px) rotateY(-8deg) rotateX(2deg) translateZ(40px) scale(1.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'perspective(1200px) rotateY(-8deg) rotateX(2deg) translateZ(20px) scale(1)';
+                  }}
+                />
+              </div>
             </Link>
           </div>
 

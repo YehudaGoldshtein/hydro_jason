@@ -16,7 +16,7 @@ const features = [
   {
     id: 'quick-setup',
     icon: RefreshCw,
-    text: 'החזר תוך 30 יום',
+    text: 'החזרים - תוך 30 יום',
   },
   {
     id: 'free-hands',
@@ -158,6 +158,34 @@ export function ProductHeroSection() {
           <div className="relative mb-6 md:mb-8">
             {/* Background with subtle pattern */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#faf8f6] via-[#fff6f2] to-white rounded-2xl border border-[#e8ddd4] shadow-[0_4px_16px_rgba(0,0,0,0.06)]"></div>
+            
+            {/* Falling Gift Icons Background */}
+            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+              {Array.from({ length: 20 }).map((_, i) => {
+                const colors = ['#e07a63', '#f2a085', '#e5b7a3'];
+                const color = colors[i % colors.length];
+                const randomLeft = (i * 13 + (i % 7) * 5) % 95;
+                const size = 14 + (i % 5) * 3;
+                const duration = 6 + (i % 7) * 2;
+                const delay = i * 0.25;
+                return (
+                  <Gift
+                    key={i}
+                    className="absolute"
+                    style={{
+                      left: `${randomLeft}%`,
+                      width: `${size}px`,
+                      height: `${size}px`,
+                      color: color,
+                      opacity: 0.12 + (i % 4) * 0.04,
+                      animation: `fallingGift ${duration}s linear infinite`,
+                      animationDelay: `${delay}s`,
+                    }}
+                    strokeWidth={1.5}
+                  />
+                );
+              })}
+            </div>
             
             {/* Content */}
             <div className="relative z-10 p-6 md:p-8">

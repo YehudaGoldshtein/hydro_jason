@@ -118,7 +118,7 @@ export function ImageCarousel({
 
   return (
     <div
-        className={`bg-[#FDFBF9] rounded-2xl p-4 md:p-6 relative transition-all duration-300 ${className}`}
+        className={`bg-[#FDFBF9] rounded-2xl p-4 md:p-6 relative transition-shadow duration-300 ${className}`}
         dir="rtl"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -136,16 +136,14 @@ export function ImageCarousel({
               0 0 0 1px rgba(229, 183, 163, 0.2),
               inset 0 1px 0 rgba(255, 255, 255, 0.9)
             `,
-          animation: isHovered ? 'none' : 'glowPulse 3s ease-in-out infinite',
         }}
       >
-        {/* Glow effect overlay with blinking animation */}
+        {/* Glow effect overlay */}
         <div 
-          className={`absolute inset-0 rounded-2xl pointer-events-none ${
-            isHovered ? 'opacity-80 transition-opacity duration-300' : ''
+          className={`absolute inset-0 rounded-2xl pointer-events-none transition-opacity duration-300 ${
+            isHovered ? 'opacity-80' : 'opacity-60'
           }`}
           style={{
-            animation: isHovered ? 'none' : 'glowOverlay 3s ease-in-out infinite',
             background: 'radial-gradient(circle at center, rgba(224, 122, 99, 0.1) 0%, transparent 70%)',
           }}
         />
@@ -167,10 +165,7 @@ export function ImageCarousel({
           {currentImage.title && (
             <h3 
               key={`title-${currentImage.id}`}
-              className="text-lg md:text-xl font-bold text-text-primary text-center transition-opacity duration-500"
-              style={{
-                animation: isHovered ? 'none' : 'titleGlow 3s ease-in-out infinite',
-              }}
+              className="text-lg md:text-xl font-bold text-text-primary text-center"
             >
               {currentImage.title}
             </h3>
@@ -179,9 +174,9 @@ export function ImageCarousel({
           {/* Image */}
           <div className="w-full flex justify-center">
             <div
-              className={`relative transition-all duration-500 rounded-[32px] overflow-hidden ${
+              className={`relative transition-shadow duration-300 rounded-[32px] overflow-hidden ${
                 isDragging ? 'cursor-grabbing' : 'cursor-grab'
-              } max-w-full ${isHovered ? 'scale-[1.02]' : 'scale-100'}`}
+              } max-w-full`}
               style={{
                 boxShadow: isHovered
                   ? `
@@ -189,8 +184,11 @@ export function ImageCarousel({
                     0 10px 25px rgba(224, 122, 99, 0.2),
                     0 0 0 1px rgba(242, 160, 133, 0.4)
                   `
-                  : undefined,
-                animation: isHovered ? 'none' : 'imageGlow 3s ease-in-out infinite',
+                  : `
+                    0 15px 40px rgba(224, 122, 99, 0.2),
+                    0 5px 15px rgba(224, 122, 99, 0.15),
+                    0 0 0 1px rgba(242, 160, 133, 0.3)
+                  `,
               }}
             >
               {/* Image glow effect */}

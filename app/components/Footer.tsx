@@ -121,7 +121,7 @@ export function Footer() {
 
       <a
         href={`https://wa.me/${whatsappButton.whatsappNumber}`}
-        className="fixed z-60 bottom-24 right-4 w-12 h-12 rounded-full bg-ui-whatsapp text-white shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center"
+        className="fixed z-[999] bottom-24 right-4 w-12 h-12 rounded-full bg-ui-whatsapp text-white shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center"
         target="_blank"
         rel="noreferrer"
         aria-label={whatsappButton.ariaLabel}
