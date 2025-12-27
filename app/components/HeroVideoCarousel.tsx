@@ -152,18 +152,16 @@ export function HeroVideoCarousel() {
   // #endregion
 
   return (
-    <section className="bg-bg-page py-0 overflow-visible" dir="rtl">
-      <div className="w-full px-4 md:px-8" style={{ overflow: 'visible', paddingTop: '15%', paddingBottom: '5%' }}>
-        <div ref={outerContainerRef} className="mx-auto" style={{ 
-          maxWidth: 'min(calc(100vw - 2rem), 1560px)',
+    <section className="bg-bg-page py-0 overflow-visible md:-mt-4 md:-mb-4" dir="rtl">
+      <div className="w-full px-4 md:px-8 pt-[15%] md:pt-0 pb-[5%] md:pb-0" style={{ overflow: 'visible' }}>
+        <div ref={outerContainerRef} className="mx-auto max-w-md md:max-w-xl lg:max-w-2xl" style={{ 
           perspective: '3250px',
           perspectiveOrigin: '50% 50%',
           overflow: 'visible'
         }}>
           {/* Slides - 3D Cube Container */}
-          <div ref={carouselRef} className="relative overflow-hidden w-full" style={{
+          <div ref={carouselRef} className="relative overflow-hidden w-full scale-[1.3] md:scale-100 lg:scale-[1.05]" style={{
             aspectRatio: '1 / 1',
-            transform: 'scale(1.3)',
             transformOrigin: 'center center',
             perspective: '3250px',
             transformStyle: 'preserve-3d'
@@ -328,7 +326,7 @@ export function HeroVideoCarousel() {
         </div>
 
         {/* Thumbnails */}
-        <div className="mt-6 md:mt-8 flex justify-center items-center gap-3 md:gap-4 overflow-x-auto pb-2">
+        <div className="mt-6 md:mt-2 flex justify-center items-center gap-3 md:gap-4 overflow-x-auto pb-2 md:pb-0">
           {slides.map((slide, index) => (
             <button
               key={slide.id}

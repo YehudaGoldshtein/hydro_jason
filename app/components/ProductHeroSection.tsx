@@ -76,7 +76,7 @@ export function ProductHeroSection() {
       <div className="container mx-auto px-4 md:px-8">
         <div className="max-w-4xl mx-auto">
           {/* Rating and Social Proof */}
-          <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 mb-6 mt-6 md:mt-8">
+          <div className="flex flex-col items-center justify-center gap-2 md:gap-3 mb-6 mt-6 md:mt-4">
             <div className="flex items-center gap-1.5">
               <div className="flex items-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
@@ -90,8 +90,8 @@ export function ProductHeroSection() {
                 {rating}/5
               </span>
             </div>
-            <div className="h-5 w-px bg-border-divider hidden md:block"></div>
-            <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2">
+            <div className="h-5 w-px bg-border-divider hidden"></div>
+            <div className="flex flex-col items-center gap-1 md:gap-2">
               <span className="text-sm md:text-base font-semibold text-text-primary">
                 {socialProofBadge}
               </span>
