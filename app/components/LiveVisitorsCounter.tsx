@@ -45,7 +45,7 @@ export function LiveVisitorsCounter() {
 
   return (
     <div 
-      className="fixed top-20 right-2 md:right-4 z-50 bg-white/95 backdrop-blur-sm rounded-xl md:rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_4px_12px_rgba(224,122,99,0.15)] border border-primary-lighter/30 px-3 py-2 md:px-4 md:py-2.5 flex items-center gap-2 transition-all duration-300"
+      className="fixed top-24 md:top-20 right-2 md:right-4 z-50 bg-white/95 backdrop-blur-sm rounded-xl md:rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_4px_12px_rgba(224,122,99,0.15)] border border-primary-lighter/30 px-3 py-2 md:px-4 md:py-2.5 flex items-center gap-2 transition-all duration-300"
       dir="rtl"
       style={{
         animation: 'floatUpDown 4s ease-in-out infinite',

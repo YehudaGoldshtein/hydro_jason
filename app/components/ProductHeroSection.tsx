@@ -1,4 +1,4 @@
-import { Star, Baby, Sparkles, RefreshCw, Hand, Gift, Package, Grip, Sparkles as SparklesIcon, ChevronDown } from 'lucide-react';
+import { Star, Baby, Sparkles, RefreshCw, Hand, Gift, Package, Grip } from 'lucide-react';
 import { activeContent } from '~/configs/content-active';
 import { ImageCarousel, type ImageCarouselImage } from './ImageCarousel';
 
@@ -29,45 +29,55 @@ export function ProductHeroSection() {
   const { rating, socialProofBadge } = activeContent.hero;
   const { productName } = activeContent.global;
 
-  // Scroll to gifts section
-  const scrollToGifts = () => {
-    const giftsSection = document.getElementById('gifts-section');
-    if (giftsSection) {
-      giftsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
   // Gift images for carousel with titles and descriptions
   const giftsImages: ImageCarouselImage[] = [
     {
       id: 'gift-1',
-      src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/6.gif?v=1766842103',
-      alt: 'ידיות אוניברסליות לבקבוק במתנה',
-      title: 'ידיות אוניברסליות לבקבוק',
-      description: 'ידיות המתאימות לכל סוגי הבקבוק',
+      src: 'https://cdn.shopify.com/s/files/1/0661/6416/2608/files/Gemini_Generated_Image_qpr44wqpr44wqpr4.png?v=1766316875',
+      alt: 'מחזיק בקבוק לעגלה במתנה',
+      title: 'מחזיק בקבוק לעגלה',
       width: 400,
       height: 400,
-      price: '29.90₪',
     },
     {
       id: 'gift-2',
-      src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/1be04c5874f535bc3ec9b7f993d34bc2.jpg?v=1766846465',
+      src: 'https://cdn.shopify.com/s/files/1/0661/6416/2608/files/Gemini_Generated_Image_5l3r7p5l3r7p5l3r.png?v=1766316758',
       alt: 'מחזיק מוצץ מעץ במתנה',
       title: 'מחזיק מוצץ מעץ',
-      description: 'מחזיק מוצץ יוקרתי מעץ',
       width: 400,
       height: 400,
-      price: '39.90₪',
+    },
+    {
+      id: 'gift-3',
+      src: 'https://cdn.shopify.com/s/files/1/0661/6416/2608/files/Gemini_Generated_Image_64vnf364vnf364vn_1.png?v=1766319466',
+      alt: 'ידיות אוניברסליות לבקבוק במתנה',
+      title: 'ידיות אוניברסליות לבקבוק',
+      width: 400,
+      height: 400,
+    },
+    {
+      id: 'gift-4',
+      src: 'https://cdn.shopify.com/s/files/1/0661/6416/2608/files/unnamed_5.jpg?v=1766316631',
+      alt: 'מחזיק סיליקון לבקבוק במתנה',
+      title: 'מחזיק סיליקון לבקבוק',
+      width: 400,
+      height: 400,
+    },
+    {
+      id: 'gift-5',
+      src: 'https://cdn.shopify.com/s/files/1/0661/6416/2608/files/unnamed_10.jpg?v=1766316637',
+      alt: 'כיסוי בקבוק חם במתנה',
+      title: 'כיסוי בקבוק חם',
+      width: 400,
+      height: 400,
     },
     {
       id: 'gift-6',
-      src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/O1CN014CsOE41a5N8pLhT0J__2212488763278-0-cib.jpg?v=1766846288',
-      alt: 'שומר בקבוק לעגלה במתנה',
-      title: 'שומר בקבוק לעגלה',
-      description: 'רצועה הנתפסת לכל מקום ולכל מקבוק ושומרת על הבקבוק שלא יאבד',
+      src: 'https://cdn.shopify.com/s/files/1/0710/4846/2518/files/1212.jpg?v=1764090881',
+      alt: 'מגש אוכל לתינוק במתנה',
+      title: 'מגש אוכל לתינוק',
       width: 400,
       height: 400,
-      price: '19.90₪',
     },
   ];
 
@@ -76,63 +86,28 @@ export function ProductHeroSection() {
       <div className="container mx-auto px-4 md:px-8">
         <div className="max-w-4xl mx-auto">
           {/* Rating and Social Proof */}
-          <div className="flex flex-col items-center justify-center gap-2 md:gap-3 mb-6 mt-6 md:mt-4">
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center gap-0.5">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className="w-4 h-4 md:w-5 md:h-5 fill-ui-star text-ui-star"
+                    className="w-5 h-5 md:w-6 md:h-6 fill-ui-star text-ui-star"
                   />
                 ))}
               </div>
-              <span className="text-lg md:text-xl font-bold text-text-primary">
+              <span className="text-xl md:text-2xl font-bold text-text-primary">
                 {rating}/5
               </span>
             </div>
-            <div className="h-5 w-px bg-border-divider hidden"></div>
-            <div className="flex flex-col items-center gap-1 md:gap-2">
-              <span className="text-sm md:text-base font-semibold text-text-primary">
-                {socialProofBadge}
-              </span>
-              <span className="text-lg md:text-xl font-bold text-primary-main">
-                199₪
-              </span>
-              <button
-                onClick={scrollToGifts}
-                className="relative flex items-center gap-1.5 hover:scale-110 transition-all duration-300 hover:bg-gradient-to-r hover:from-[#fff6f2] hover:to-[#fce9de] rounded-lg px-3 py-1.5 cursor-pointer group animate-[giftBounce_2s_ease-in-out_infinite]"
-                style={{
-                  animation: 'giftBounce 2s ease-in-out infinite, giftGlow 2s ease-in-out infinite',
-                }}
-                aria-label="גלול לראות את המתנות"
-              >
-                <Gift 
-                  className="w-4 h-4 md:w-5 md:h-5 text-primary-main group-hover:scale-125 transition-transform duration-300" 
-                  style={{
-                    animation: 'giftPulse 1.5s ease-in-out infinite',
-                  }}
-                  strokeWidth={2.5} 
-                />
-                <span className="text-xs md:text-sm font-semibold text-primary-main group-hover:text-[#c45f4c] transition-colors">
-                  (3 מתנות)
-                </span>
-                <ChevronDown 
-                  className="w-3 h-3 md:w-4 md:h-4 text-primary-main opacity-70 group-hover:opacity-100 transition-opacity" 
-                  style={{
-                    animation: 'arrowBounce 1.5s ease-in-out infinite',
-                  }}
-                  strokeWidth={2.5}
-                />
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary-main rounded-full animate-ping opacity-75"></span>
-              </button>
-              <span className="text-xs md:text-sm text-text-secondary">
-                (עד גמר המלאי)
-              </span>
-            </div>
+            <div className="h-6 w-px bg-border-divider hidden md:block"></div>
+            <span className="text-base md:text-lg font-semibold text-text-primary">
+              {socialProofBadge}
+            </span>
           </div>
 
           {/* Product Name */}
-          <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-center text-text-primary mb-6 md:mb-8 whitespace-nowrap">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center text-text-primary mb-6 md:mb-8">
             {productName} - תומך הנקה
           </h1>
 
@@ -148,7 +123,7 @@ export function ProductHeroSection() {
               
               <div className="relative z-10">
                 <p className="text-sm md:text-base text-text-primary text-center leading-relaxed mb-3 font-medium italic">
-                  "זה מסוג המוצרים שאחרי שאת קונה אותם את לא מבינה איך הסתדרת לפני זה"
+                  "אפילו בעלי התלונן כל פעם שהיה צריך להרים אותו. עכשיו הוא זה שמבקש לשים את המנשא. אין לי מושג איך הסתדרנו בלעדיו"
                 </p>
                 <div className="flex items-center justify-center gap-2">
                   <div className="h-px w-8 bg-primary-main"></div>
@@ -161,8 +136,26 @@ export function ProductHeroSection() {
             </div>
           </div>
 
+          {/* Features */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 md:mb-8">
+            {features.map((feature) => {
+              const IconComponent = feature.icon;
+              return (
+                <div
+                  key={feature.id}
+                  className="flex flex-col items-center gap-2 text-center"
+                >
+                  <IconComponent className="w-6 h-6 md:w-8 md:h-8 text-primary-main" strokeWidth={2} />
+                  <p className="text-xs md:text-sm font-medium text-text-primary leading-tight">
+                    {feature.text}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
           {/* Special Bundle Offer */}
-          <div id="gifts-section" className="relative mb-6 md:mb-8">
+          <div className="relative mb-6 md:mb-8">
             {/* Background with subtle pattern */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#faf8f6] via-[#fff6f2] to-white rounded-2xl border border-[#e8ddd4] shadow-[0_4px_16px_rgba(0,0,0,0.06)]"></div>
             
@@ -199,11 +192,11 @@ export function ProductHeroSection() {
               {/* Header */}
               <div className="text-center mb-6">
                 <div className="inline-flex items-center gap-2 mb-2">
-                  <Gift className="w-5 h-5 text-primary-main" strokeWidth={2} />
+                  <div className="w-1 h-8 bg-gradient-to-b from-primary-main to-primary-light rounded-full"></div>
                   <p className="text-lg md:text-xl font-bold text-[#52423d]">
                     בקניית הכרית תקבלי
                   </p>
-                  <Gift className="w-5 h-5 text-primary-main" strokeWidth={2} />
+                  <div className="w-1 h-8 bg-gradient-to-b from-primary-main to-primary-light rounded-full"></div>
                 </div>
                 <p className="text-sm md:text-base font-normal text-[#7a6c66]">
                   (עד גמר המלאי)
@@ -270,23 +263,18 @@ export function ProductHeroSection() {
             </div>
           </div>
 
-          {/* Features */}
-          <div className="bg-white rounded-xl p-3 md:p-4 border border-[#f2e3dd] shadow-sm mb-6 md:mb-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-              {features.map((feature) => {
-                const IconComponent = feature.icon;
-                return (
-                  <div
-                    key={feature.id}
-                    className="flex flex-row md:flex-col items-center gap-2 text-center p-2 md:p-2.5 rounded-lg hover:bg-[#fff6f2] transition-colors"
-                  >
-                    <IconComponent className="w-4 h-4 md:w-5 md:h-5 text-primary-main flex-shrink-0" strokeWidth={2} />
-                    <p className="text-[10px] md:text-xs font-medium text-text-primary leading-tight">
-                      {feature.text}
-                    </p>
-                  </div>
-                );
-              })}
+          {/* Limited Time Promotion - Premium Clean Design */}
+          <div className="text-center mb-6 md:mb-8">
+            <div 
+              className="inline-flex items-center gap-3 bg-gradient-to-r from-primary-main via-primary-light to-primary-main text-white px-6 py-3 md:px-8 md:py-3.5 rounded-full text-sm md:text-base font-bold relative overflow-hidden group transition-all duration-300 hover:scale-[1.02]"
+              style={{
+                animation: 'cleanBadgeGlow 4s ease-in-out infinite',
+                textShadow: '0 2px 4px rgba(0, 0, 0, 0.2), 0 0 8px rgba(255, 255, 255, 0.3)',
+                letterSpacing: '0.03em',
+              }}
+            >
+              {/* Content - Emphasized */}
+              <span className="relative z-10 tracking-wide font-extrabold drop-shadow-lg">המתנות עד גמר המלאי</span>
             </div>
           </div>
 

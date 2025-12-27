@@ -129,7 +129,7 @@ export default function Index() {
     <SelectedVariantProvider>
       <Layout>
         <LiveVisitorsCounter />
-        <div className="pb-24 md:pb-28">
+        <div className="pb-28 md:pb-32">
           <HeroVideoCarousel />
           <ProductHeroSection />
           {/* <div className="container mx-auto px-4 py-8 md:py-12">
