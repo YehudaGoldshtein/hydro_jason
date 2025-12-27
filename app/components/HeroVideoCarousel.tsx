@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
 
@@ -12,6 +12,9 @@ interface Slide {
 
 export function HeroVideoCarousel() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const { slides: slidesData, ariaLabels, placeholders } = activeContent.heroVideoCarousel;
   const mediaSlides = landingMedia.heroVideoCarousel.slides;
 
@@ -19,6 +22,32 @@ export function HeroVideoCarousel() {
     ...slide,
     src: mediaSlides[index]?.src, // Use actual src from media config
   }));
+
+  // Stop all videos when slide changes, then start the new one if it's a video
+  useEffect(() => {
+    // Stop all videos first
+    videoRefs.current.forEach((video) => {
+      if (video && !video.paused) {
+        video.pause();
+      }
+    });
+
+    // Check if current slide is a video and start it if needed
+    const currentVideo = videoRefs.current[currentSlide];
+    const isCurrentSlideVideo = slides[currentSlide]?.type === 'video' && slides[currentSlide]?.src;
+    
+    if (currentVideo && isCurrentSlideVideo) {
+      currentVideo.muted = isMuted;
+      // Auto-play the new video slide (autoplay attribute should handle this, but we ensure it)
+      currentVideo.play().catch(() => {
+        // Autoplay might be blocked, that's okay
+        setIsPlaying(false);
+      });
+      setIsPlaying(true);
+    } else {
+      setIsPlaying(false);
+    }
+  }, [currentSlide, isMuted]);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -31,6 +60,30 @@ export function HeroVideoCarousel() {
   const goToSlide = (index: number) => {
     setCurrentSlide(index);
   };
+
+  const togglePlayPause = () => {
+    const video = videoRefs.current[currentSlide];
+    if (video) {
+      if (video.paused) {
+        video.play();
+        setIsPlaying(true);
+      } else {
+        video.pause();
+        setIsPlaying(false);
+      }
+    }
+  };
+
+  const toggleMute = () => {
+    const video = videoRefs.current[currentSlide];
+    if (video) {
+      video.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  // Check if current slide is a video
+  const isCurrentSlideVideo = slides[currentSlide]?.type === 'video' && slides[currentSlide]?.src;
 
   return (
     <section className="bg-bg-page py-0" dir="rtl">
@@ -87,11 +140,16 @@ export function HeroVideoCarousel() {
                   {slide.type === 'video' ? (
                     slide.src ? (
                       <video
-                        className="w-full h-full object-cover"
+                        ref={(el) => {
+                          videoRefs.current[index] = el;
+                        }}
+                        className="w-full h-full object-cover rounded-2xl"
                         autoPlay
                         loop
-                        muted
                         playsInline
+                        muted={isMuted}
+                        onPlay={() => setIsPlaying(true)}
+                        onPause={() => setIsPlaying(false)}
                       >
                         <source src={slide.src} type="video/mp4" />
                         {placeholders.browserNotSupported}
@@ -113,7 +171,7 @@ export function HeroVideoCarousel() {
                       <img
                         src={slide.src}
                         alt={slide.alt}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover rounded-2xl"
                       />
                     ) : (
                       // Image Placeholder
@@ -151,6 +209,37 @@ export function HeroVideoCarousel() {
             >
               <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
             </button>
+
+            {/* Video Controls - Only show for video slides */}
+            {isCurrentSlideVideo && (
+              <div className="absolute bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-3">
+                {/* Play/Pause Button */}
+                <button
+                  onClick={togglePlayPause}
+                  className="bg-white/90 hover:bg-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
+                  aria-label={isPlaying ? 'עצור' : 'נגן'}
+                >
+                  {isPlaying ? (
+                    <Pause className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
+                  ) : (
+                    <Play className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
+                  )}
+                </button>
+
+                {/* Mute/Unmute Button */}
+                <button
+                  onClick={toggleMute}
+                  className="bg-white/90 hover:bg-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
+                  aria-label={isMuted ? 'הפעל סאונד' : 'כבה סאונד'}
+                >
+                  {isMuted ? (
+                    <VolumeX className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
+                  ) : (
+                    <Volume2 className="w-5 h-5 md:w-6 md:h-6 text-text-primary" strokeWidth={2.5} />
+                  )}
+                </button>
+              </div>
+            )}
 
             {/* Pagination Dots */}
             <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2">

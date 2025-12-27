@@ -30,7 +30,7 @@ export const media = {
         id: 1,
         type: 'video' as const,
         // וידאו ראשי - תינוק אוכל עם המוצר
-        src: 'https://example.com/video1.mp4',
+        src: 'https://cdn.shopify.com/videos/c/o/v/13947715cefd4d4fa0ef999347df380e.mp4',
         thumbnail: 'https://placehold.co/800x600/fff6f2/52423d?text=VIDEO',
       },
       {

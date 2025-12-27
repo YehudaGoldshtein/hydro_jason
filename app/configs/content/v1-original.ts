@@ -697,7 +697,7 @@ export const content = {
     stockWarning: 'המלאי מוגבל',
     // טקסט כפתור
     ctaButton: {
-      default: 'לרכישה | 199 ₪',
+      default: 'לרכישה',
       submitting: "מעביר לצ'קאאוט...",
     },
     // תיאור נגישות לתמונה חלופית
