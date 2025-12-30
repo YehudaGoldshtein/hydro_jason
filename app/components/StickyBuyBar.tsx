@@ -4,7 +4,6 @@ import { useLoaderData } from '@remix-run/react';
 import { useAnalytics } from '@shopify/hydrogen';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
-import { trackAddToCart } from '~/lib/analytics';
 
 export function StickyBuyBar() {
   const [visible, setVisible] = useState(true);
@@ -59,25 +58,34 @@ export function StickyBuyBar() {
         }
       }
 
-      // Track AddToCart event for Meta Pixel
-      if (product && defaultVariant && typeof window !== 'undefined') {
+      // Meta Pixel: Track InitiateCheckout event first
+      if (typeof window !== 'undefined' && window.fbq && product && defaultVariant) {
         try {
-          trackAddToCart({
-            content_name: product.title,
-            content_ids: [product.id],
+          // Extract product ID (remove 'gid://shopify/Product/' prefix if present)
+          const productId = product.id.replace('gid://shopify/Product/', '');
+          const productValue = parseFloat(defaultVariant.price.amount) || 1.00;
+          
+          window.fbq('track', 'InitiateCheckout', {
+            content_ids: [productId],
             content_type: 'product',
-            value: parseFloat(defaultVariant.price.amount),
+            value: productValue,
             currency: 'ILS',
-            quantity: 1,
           });
-          console.log('[Meta Pixel] ✅ Tracked AddToCart from StickyBuyBar:', product.title);
+          console.log('[Meta Pixel] ✅ Tracked InitiateCheckout from StickyBuyBar:', {
+            productId,
+            value: productValue,
+            currency: 'ILS',
+          });
         } catch (error) {
-          console.error('[Meta Pixel] ❌ Error tracking AddToCart:', error);
+          console.error('[Meta Pixel] ❌ Error tracking InitiateCheckout:', error);
         }
       }
 
-      console.log('🚀 Calling goToCheckout with variant 0 (₪199):', defaultVariant.id);
-      goToCheckout(defaultVariant.id, 1);
+      // Wait 200ms to ensure Pixel has time to send the data before redirect
+      setTimeout(() => {
+        console.log('🚀 Calling goToCheckout with variant 0 (₪199):', defaultVariant.id);
+        goToCheckout(defaultVariant.id, 1);
+      }, 200);
     } else {
       console.log('⚠️ No variant found, scrolling to pricing');
       // Fallback: scroll to pricing section

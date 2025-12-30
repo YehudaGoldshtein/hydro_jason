@@ -28,8 +28,12 @@ export function useCheckout() {
         }
       }
 
-      console.log('✅ Redirecting to checkout:', fetcher.data.checkoutUrl);
-      window.location.href = fetcher.data.checkoutUrl;
+      // Wait 200ms to ensure Pixel has time to send InitiateCheckout before redirect
+      console.log('⏳ Waiting 200ms before redirect to ensure Pixel data is sent...');
+      setTimeout(() => {
+        console.log('✅ Redirecting to checkout:', fetcher.data.checkoutUrl);
+        window.location.href = fetcher.data.checkoutUrl;
+      }, 200);
     } else if (fetcher.data?.error) {
       console.error('❌ Checkout error:', fetcher.data.error);
     }

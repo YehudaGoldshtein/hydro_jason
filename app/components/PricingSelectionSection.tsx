@@ -5,7 +5,6 @@ import { useAnalytics } from '@shopify/hydrogen';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
 import { useSelectedVariant } from '~/lib/SelectedVariantContext';
-import { trackAddToCart } from '~/lib/analytics';
 
 interface PricingOption {
   id: string;
@@ -194,38 +193,48 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
       }
     }
 
-    // Track AddToCart event for Meta Pixel
-    if (product && selectedVariant && typeof window !== 'undefined') {
+    // Meta Pixel: Track InitiateCheckout event first
+    if (typeof window !== 'undefined' && window.fbq && product && selectedVariant) {
       try {
-        trackAddToCart({
-          content_name: product.title,
-          content_ids: [product.id],
+        // Extract product ID (remove 'gid://shopify/Product/' prefix if present)
+        const productId = product.id.replace('gid://shopify/Product/', '');
+        const productValue = parseFloat(selectedVariant.price.amount) * quantity || 1.00;
+        
+        window.fbq('track', 'InitiateCheckout', {
+          content_ids: [productId],
           content_type: 'product',
-          value: parseFloat(selectedVariant.price.amount) * quantity,
+          value: productValue,
           currency: 'ILS',
-          quantity: quantity,
         });
-        console.log('[Meta Pixel] ✅ Tracked AddToCart:', product.title, 'Quantity:', quantity);
+        console.log('[Meta Pixel] ✅ Tracked InitiateCheckout:', {
+          productId,
+          value: productValue,
+          currency: 'ILS',
+          quantity,
+        });
       } catch (error) {
-        console.error('[Meta Pixel] ❌ Error tracking AddToCart:', error);
+        console.error('[Meta Pixel] ❌ Error tracking InitiateCheckout:', error);
       }
     }
 
-    const formData = new FormData();
-    formData.append('cartAction', 'ADD_TO_CART');
-    formData.append('merchandiseId', merchandiseId);
-    formData.append('quantity', quantity.toString());
+    // Wait 200ms to ensure Pixel has time to send the data before redirect
+    setTimeout(() => {
+      const formData = new FormData();
+      formData.append('cartAction', 'ADD_TO_CART');
+      formData.append('merchandiseId', merchandiseId);
+      formData.append('quantity', quantity.toString());
 
-    console.log('📤 Submitting to cart with:', {
-      cartAction: 'ADD_TO_CART',
-      merchandiseId,
-      quantity
-    });
+      console.log('📤 Submitting to cart with:', {
+        cartAction: 'ADD_TO_CART',
+        merchandiseId,
+        quantity
+      });
 
-    fetcher.submit(formData, {
-      method: 'post',
-      action: '/cart'
-    });
+      fetcher.submit(formData, {
+        method: 'post',
+        action: '/cart'
+      });
+    }, 200);
   };
 
   return (

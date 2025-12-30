@@ -4,7 +4,6 @@ import type { LinksFunction, MetaFunction, LoaderFunctionArgs } from '@shopify/r
 import { Analytics, getShopAnalytics } from '@shopify/hydrogen';
 import { json } from '@shopify/remix-oxygen';
 import { activeTheme } from './configs/theme-active';
-import { initMetaPixel } from './lib/analytics';
 import styles from './styles/app.css?url';
 
 export const links: LinksFunction = () => {
@@ -231,14 +230,6 @@ function AnalyticsProviderWrapper({ data }: { data: any }) {
 export default function App() {
   const data = useLoaderData<typeof loader>();
   
-  // Meta Pixel is now loaded directly in <head> - no need for useEffect
-  // Keeping this for backwards compatibility and debugging
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.fbq) {
-      console.log('[Meta Pixel] ✅ Meta Pixel is loaded and ready');
-    }
-  }, []);
-  
   // Debug logging (client-side) - CRITICAL for debugging shopId issues
   if (typeof window !== 'undefined') {
     console.log('[Analytics] 🔍 Client-side shop data (before Analytics.Provider):', {
@@ -316,7 +307,7 @@ export default function App() {
         <Meta />
         <Links />
         <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
-        {/* Meta Pixel - Initialize immediately (uses queue if script not loaded yet) */}
+        {/* Meta Pixel Base Code */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -325,35 +316,33 @@ export default function App() {
               n.callMethod.apply(n,arguments):n.queue.push(arguments)};
               if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
               n.queue=[];t=b.createElement(e);t.async=!0;
-              t.src=v;
-              t.onload=function(){
-                if(window.fbq){
-                  try{
-                    window.fbq('init', '1855054518452200');
-                    console.log('[Meta Pixel] ✅ Script loaded and initialized');
-                  }catch(e){
-                    console.error('[Meta Pixel] ❌ Error initializing:', e);
-                  }
-                }
-              };
-              t.onerror=function(){
-                console.error('[Meta Pixel] ❌ Failed to load script');
-              };
-              s=b.getElementsByTagName(e)[0];
+              t.src=v;s=b.getElementsByTagName(e)[0];
               s.parentNode.insertBefore(t,s)}(window, document,'script',
               'https://connect.facebook.net/en_US/fbevents.js');
-              // Initialize and track immediately - will be queued if script not loaded yet
-              if(typeof fbq!=='undefined'){
+              
+              // Initialize only once using global flag
+              if(typeof window!=='undefined'&&!window.fb_initialized){
+                window.fb_initialized=true;
                 fbq('init', '1855054518452200');
-                fbq('track', 'PageView');
+                console.log('[Meta Pixel] ✅ Initialized (once)');
+              }
+              
+              // Track PageView only once per route using current pathname
+              if(typeof window!=='undefined'&&window.fbq){
+                var currentPath=window.location.pathname;
+                if(!window.fb_pageview_tracked||window.fb_pageview_tracked!==currentPath){
+                  window.fb_pageview_tracked=currentPath;
+                  fbq('track', 'PageView');
+                  console.log('[Meta Pixel] ✅ PageView tracked for:', currentPath);
+                }
               }
             `,
           }}
         />
         <noscript>
-          <img 
-            height="1" 
-            width="1" 
+          <img
+            height="1"
+            width="1"
             style={{display: 'none'}}
             src="https://www.facebook.com/tr?id=1855054518452200&ev=PageView&noscript=1"
             alt=""
