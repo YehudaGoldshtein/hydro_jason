@@ -1,4 +1,4 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from '@remix-run/react';
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData, useLocation } from '@remix-run/react';
 import { useEffect, useMemo } from 'react';
 import type { LinksFunction, MetaFunction, LoaderFunctionArgs } from '@shopify/remix-oxygen';
 import { Analytics, getShopAnalytics } from '@shopify/hydrogen';
@@ -238,8 +238,22 @@ function AnalyticsProviderWrapper({ data }: { data: any }) {
 
 export default function App() {
   const data = useLoaderData<typeof loader>();
+  const location = useLocation(); // Track route changes
   
-  // Meta Pixel initialization - Production-ready with useEffect
+  // Helper function to track PageView for current route
+  const trackPageViewForRoute = () => {
+    if (typeof window === 'undefined' || !window.fbq) return;
+    
+    const currentPath = location.pathname;
+    if (!window.fb_pageview_tracked || window.fb_pageview_tracked !== currentPath) {
+      window.fb_pageview_tracked = currentPath;
+      window.fbq('track', 'PageView');
+      console.log('[Meta Pixel] ✅ PageView tracked for:', currentPath);
+    }
+  };
+  
+  // Meta Pixel initialization - Production-ready
+  // Initialize Pixel only once on mount
   useEffect(() => {
     // SSR check - only run on client
     if (typeof window === 'undefined') return;
@@ -249,97 +263,52 @@ export default function App() {
     
     // Check if already initialized
     if (window.fb_initialized) {
-      console.log('[Meta Pixel] Already initialized, skipping');
+      console.log('[Meta Pixel] Already initialized, tracking PageView for current route');
+      trackPageViewForRoute();
       return;
     }
     
-    // Load Meta Pixel script dynamically using Facebook's base code
-    const loadMetaPixel = () => {
-      // Check if script already exists
-      if (document.querySelector('script[src*="fbevents.js"]')) {
-        console.log('[Meta Pixel] Script already loaded');
-        initializePixel(PIXEL_ID);
-        return;
-      }
-      
-      // Check if fbq already exists (might be loaded by another script)
-      if (window.fbq) {
-        console.log('[Meta Pixel] fbq already exists');
-        initializePixel(PIXEL_ID);
-        return;
-      }
-      
-      // Inject Facebook Pixel base code
-      const baseCode = `
-        !function(f,b,e,v,n,t,s)
-        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)}(window, document,'script',
-        'https://connect.facebook.net/en_US/fbevents.js');
-      `;
-      
-      const script = document.createElement('script');
-      script.innerHTML = baseCode;
-      script.onload = () => {
-        console.log('[Meta Pixel] Base code injected, waiting for fbq...');
-        initializePixel(PIXEL_ID);
-      };
-      
-      // Insert script into head
-      const firstScript = document.getElementsByTagName('script')[0];
-      if (firstScript && firstScript.parentNode) {
-        firstScript.parentNode.insertBefore(script, firstScript);
-      } else {
-        document.head.appendChild(script);
-      }
-      
-      // Also try to initialize after a short delay in case onload doesn't fire
-      setTimeout(() => {
-        if (window.fbq) {
-          initializePixel(PIXEL_ID);
-        }
-      }, 500);
-    };
-    
-    // Initialize Pixel and track PageView
-    const initializePixel = (pixelId: string) => {
-      // Wait for fbq to be available
-      const checkFbq = () => {
-        if (typeof window !== 'undefined' && window.fbq) {
-          // Initialize only once
-          if (!window.fb_initialized) {
-            window.fb_initialized = true;
-            window.fbq('init', pixelId);
-            console.log('[Meta Pixel] ✅ Initialized with ID:', pixelId);
-            
-            // Track PageView only once per route - ensure it fires after init is complete
-            const currentPath = window.location.pathname;
-            if (!window.fb_pageview_tracked || window.fb_pageview_tracked !== currentPath) {
-              window.fb_pageview_tracked = currentPath;
-              // Small delay to ensure init is fully complete before tracking PageView
-              setTimeout(() => {
-                if (window.fbq) {
-                  window.fbq('track', 'PageView');
-                  console.log('[Meta Pixel] ✅ PageView tracked for:', currentPath);
-                }
-              }, 50);
-            }
+    // Wait for fbq to be available (script is loaded in <head>)
+    const initializePixel = () => {
+      if (window.fbq && !window.fb_initialized) {
+        window.fb_initialized = true;
+        window.fbq('init', PIXEL_ID);
+        console.log('[Meta Pixel] ✅ Initialized with ID:', PIXEL_ID);
+        
+        // Track PageView after init is complete
+        setTimeout(() => {
+          trackPageViewForRoute();
+        }, 50);
+      } else if (!window.fbq) {
+        // Retry after 100ms if fbq not ready yet (max 10 retries = 1 second)
+        let retries = 0;
+        const maxRetries = 10;
+        const retry = () => {
+          retries++;
+          if (window.fbq && !window.fb_initialized) {
+            initializePixel();
+          } else if (retries < maxRetries) {
+            setTimeout(retry, 100);
+          } else {
+            console.error('[Meta Pixel] ❌ Failed to initialize after', maxRetries, 'retries');
           }
-        } else {
-          // Retry after 100ms if fbq not ready
-          setTimeout(checkFbq, 100);
-        }
-      };
-      
-      checkFbq();
+        };
+        setTimeout(retry, 100);
+      }
     };
     
-    // Start loading
-    loadMetaPixel();
-  }, []); // Empty dependency array - run only once on mount
+    // Start initialization
+    initializePixel();
+  }, []); // Run only once on mount
+  
+  // Track PageView on route changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!window.fb_initialized || !window.fbq) return;
+    
+    // Track PageView for new route
+    trackPageViewForRoute();
+  }, [location.pathname]); // Track on route change
   
   // Debug logging (client-side) - CRITICAL for debugging shopId issues
   if (typeof window !== 'undefined') {
