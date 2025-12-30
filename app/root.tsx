@@ -65,12 +65,11 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   return json({
     cart: cartPromise,
     shop: shopAnalytics,
+    // Minimal consent config to avoid Shopify object redefinition errors
     consent: {
       checkoutDomain: env.PUBLIC_CHECKOUT_DOMAIN || env.PUBLIC_STORE_DOMAIN?.replace('.myshopify.com', '') + '.myshopify.com' || '',
       storefrontAccessToken: env.PUBLIC_STOREFRONT_API_TOKEN || '',
-      withPrivacyBanner: false, // Disable to avoid Shopify object redefinition errors
-      country: 'IL',
-      language: 'HE',
+      withPrivacyBanner: false, // Disable to avoid Shopify object redefinition
     },
   });
 }
@@ -133,6 +132,36 @@ export default function App() {
         <Meta />
         <Links />
         <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
+        {/* Safe Shopify object initialization to prevent redefinition errors */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                if (typeof window !== 'undefined') {
+                  // Safely initialize window.Shopify if it doesn't exist
+                  // Use assignment instead of defineProperty to avoid conflicts
+                  if (!window.Shopify) {
+                    window.Shopify = {};
+                  }
+                  // Prevent Object.defineProperty from redefining Shopify
+                  // Store original defineProperty
+                  const originalDefineProperty = Object.defineProperty;
+                  Object.defineProperty = function(obj, prop, descriptor) {
+                    // If trying to define 'Shopify' on window and it already exists, skip
+                    if (obj === window && prop === 'Shopify' && window.Shopify) {
+                      // Merge properties instead of redefining
+                      if (descriptor.value && typeof descriptor.value === 'object') {
+                        Object.assign(window.Shopify, descriptor.value);
+                      }
+                      return window;
+                    }
+                    return originalDefineProperty.call(this, obj, prop, descriptor);
+                  };
+                }
+              })();
+            `,
+          }}
+        />
       </head>
       <body style={{ fontFamily: 'var(--font-family-main)' }}>
         <Analytics.Provider
