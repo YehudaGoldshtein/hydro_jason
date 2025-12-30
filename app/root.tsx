@@ -1,10 +1,11 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData, useLocation } from '@remix-run/react';
-import { useEffect, useMemo } from 'react';
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from '@remix-run/react';
 import type { LinksFunction, MetaFunction, LoaderFunctionArgs } from '@shopify/remix-oxygen';
 import { Analytics, getShopAnalytics } from '@shopify/hydrogen';
-import { json } from '@shopify/remix-oxygen';
+import { defer, json } from '@shopify/remix-oxygen';
 import { activeTheme } from './configs/theme-active';
 import styles from './styles/app.css?url';
+import { MetaPixelScript } from './components/MetaPixel';
+import { MetaPixelAnalyticsIntegration } from './components/MetaPixelAnalyticsIntegration';
 
 export const links: LinksFunction = () => {
   // Dynamically generate Google Fonts URL from active theme
@@ -41,25 +42,40 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+const ROOT_QUERY = `#graphql
+  query RootQuery($country: CountryCode, $language: LanguageCode)
+  @inContext(country: $country, language: $language) {
+    shop {
+      id
+      name
+      primaryDomain {
+        url
+      }
+    }
+  }
+` as const;
+
 export async function loader({ context }: LoaderFunctionArgs) {
-  const { env } = context;
+  const { storefront, cart, env } = context;
   
   // Type-safe access to environment variables
   const envVars = env as Record<string, string | undefined>;
   
-  // DEBUG: Log environment variable
-  console.log('[Debug] PUBLIC_STOREFRONT_ID:', envVars.PUBLIC_STOREFRONT_ID);
-  
-  // Try to get cart if available, otherwise use a promise that resolves to null
-  let cartPromise: Promise<any> | null = null;
-  if (context.cart && typeof context.cart === 'object' && context.cart !== null && 'get' in context.cart && typeof (context.cart as any).get === 'function') {
-    cartPromise = (context.cart as any).get();
-  } else {
-    // Create a promise that resolves to null if cart context is not available
-    cartPromise = Promise.resolve(null);
+  // Query shop data from Storefront API using ROOT_QUERY
+  let shop: any = null;
+  try {
+    if (storefront && typeof storefront === 'object' && 'query' in storefront) {
+      const shopResult = await (storefront as any).query(ROOT_QUERY);
+      if (shopResult?.data?.shop) {
+        shop = shopResult.data.shop;
+        console.log('[Shop] ✅ Successfully fetched shop data from Storefront API:', shop);
+      }
+    }
+  } catch (error) {
+    console.warn('[Shop] ⚠️ Could not fetch shop data from Storefront API:', error instanceof Error ? error.message : String(error));
   }
-
-  // Try to use Hydrogen's getShopAnalytics first (most reliable)
+  
+  // Get shop analytics data for Analytics.Provider
   let shopAnalytics: {
     shopId: string;
     acceptedLanguage: 'HE' | string;
@@ -67,17 +83,33 @@ export async function loader({ context }: LoaderFunctionArgs) {
     hydrogenSubchannelId: string;
   } | null = null;
   
+  // #region agent log
+  console.log('[Debug] Loader - BEFORE getShopAnalytics:', {
+    hasStorefront: !!storefront,
+    envVarsPUBLIC_STOREFRONT_ID: envVars.PUBLIC_STOREFRONT_ID,
+  });
+  // #endregion
+  
   try {
-    if (context.storefront && typeof context.storefront === 'object' && 'query' in context.storefront) {
+    if (storefront && typeof storefront === 'object' && 'query' in storefront) {
       // Use Hydrogen's getShopAnalytics - this is the recommended way
       const shopAnalyticsParams: any = { 
-        storefront: context.storefront as any,
+        storefront: storefront as any,
       };
       if (envVars.PUBLIC_STOREFRONT_ID) {
         shopAnalyticsParams.publicStorefrontId = envVars.PUBLIC_STOREFRONT_ID;
       }
       const shopDataResult = getShopAnalytics(shopAnalyticsParams);
       const shopData = shopDataResult instanceof Promise ? await shopDataResult : shopDataResult;
+      
+      // #region agent log
+      console.log('[Debug] Loader - AFTER getShopAnalytics:', {
+        shopData,
+        shopDataShopId: (shopData as any)?.shopId,
+        shopDataShopIdType: typeof (shopData as any)?.shopId,
+        shopDataShopIdLength: (shopData as any)?.shopId?.length,
+      });
+      // #endregion
       
       if (shopData && typeof shopData === 'object' && (shopData as any)?.shopId) {
         // Extract serializable data
@@ -88,12 +120,14 @@ export async function loader({ context }: LoaderFunctionArgs) {
           hydrogenSubchannelId: String((shopData as any)?.hydrogenSubchannelId || '0'),
         };
         
-        console.log('[Analytics] ✅ Successfully got shop analytics from Hydrogen:', {
-          shopId: shopAnalytics.shopId,
-          shopIdLength: shopAnalytics.shopId.length,
-          acceptedLanguage: shopAnalytics.acceptedLanguage,
-          currency: shopAnalytics.currency,
+        // #region agent log
+        console.log('[Debug] Loader - AFTER creating shopAnalytics from getShopAnalytics:', {
+          shopAnalytics,
+          shopAnalyticsShopId: shopAnalytics.shopId,
+          shopAnalyticsShopIdType: typeof shopAnalytics.shopId,
+          shopAnalyticsShopIdLength: shopAnalytics.shopId.length,
         });
+        // #endregion
       }
     }
   } catch (error) {
@@ -102,313 +136,158 @@ export async function loader({ context }: LoaderFunctionArgs) {
   
   // Fallback: Extract shopId from environment variables
   if (!shopAnalytics || !shopAnalytics.shopId || shopAnalytics.shopId.trim() === '') {
-    console.log('[Analytics] 🔄 Using fallback: extracting shopId from environment variables');
+    // #region agent log
+    console.log('[Debug] Loader - Using fallback for shopId:', {
+      shopAnalytics,
+      shopAnalyticsShopId: shopAnalytics?.shopId,
+      shopAnalyticsShopIdEmpty: !shopAnalytics?.shopId || shopAnalytics.shopId.trim() === '',
+    });
+    // #endregion
     
     let shopId = envVars.PUBLIC_STOREFRONT_ID || '';
     
     // If PUBLIC_STOREFRONT_ID is not set, extract from PUBLIC_STORE_DOMAIN
     if (!shopId && envVars.PUBLIC_STORE_DOMAIN) {
       const domain = envVars.PUBLIC_STORE_DOMAIN;
-    if (domain.includes('.myshopify.com')) {
-      shopId = domain.replace('.myshopify.com', '');
-    } else {
-      shopId = domain;
-    }
+      if (domain.includes('.myshopify.com')) {
+        shopId = domain.replace('.myshopify.com', '');
+      } else {
+        shopId = domain;
+      }
     }
     
     // CRITICAL: Ensure shopId is NEVER empty - hardcode fallback for production
     if (!shopId || shopId.trim() === '') {
-      console.warn('[Analytics] ⚠️ shopId not found in env vars, using hardcoded fallback');
-      // Hardcoded fallback for production stability
       shopId = '1000075164';
-      console.log('[Analytics] ✅ Using hardcoded shopId fallback:', shopId);
     }
     
     shopAnalytics = {
       shopId: shopId.trim(),
       acceptedLanguage: 'HE' as 'HE',
-    currency: 'ILS',
-    hydrogenSubchannelId: '0',
-  };
-  
-    console.log('[Analytics] ✅ Using fallback shop configuration:', {
-      shopId: shopAnalytics.shopId,
-      shopIdLength: shopAnalytics.shopId.length,
-      acceptedLanguage: shopAnalytics.acceptedLanguage,
-      currency: shopAnalytics.currency,
-    });
-  }
-  
-  // DEBUG: Log shop analytics result
-  console.log('[Debug] Shop Analytics result:', shopAnalytics);
-  
-  // Final validation - shopId MUST be non-empty (hardcode fallback if needed)
-  if (!shopAnalytics.shopId || shopAnalytics.shopId.trim() === '') {
-    console.warn('[Analytics] ⚠️ shopId is empty after all attempts, using hardcoded fallback');
-    shopAnalytics.shopId = '1000075164';
-  }
-  
-  // CRITICAL: Final guarantee - shopId will NEVER be empty or undefined (production safety)
-  shopAnalytics.shopId = String((shopAnalytics.shopId && shopAnalytics.shopId.trim()) || '1000075164').trim();
-  
-  // Ensure shopAnalytics is never null/undefined
-  if (!shopAnalytics) {
-    shopAnalytics = {
-      shopId: '1000075164',
-      acceptedLanguage: 'HE' as 'HE',
       currency: 'ILS',
       hydrogenSubchannelId: '0',
     };
+    
+    // #region agent log
+    console.log('[Debug] Loader - AFTER fallback shopAnalytics:', {
+      shopAnalytics,
+      shopAnalyticsShopId: shopAnalytics.shopId,
+      shopAnalyticsShopIdType: typeof shopAnalytics.shopId,
+      shopAnalyticsShopIdLength: shopAnalytics.shopId.length,
+    });
+    // #endregion
   }
   
-  console.log('[Analytics] ✅ Final shop configuration (ready for Analytics.Provider):', {
-    shopId: shopAnalytics.shopId,
-    shopIdLength: shopAnalytics.shopId.length,
-    shopIdType: typeof shopAnalytics.shopId,
-    acceptedLanguage: shopAnalytics.acceptedLanguage,
-    currency: shopAnalytics.currency,
-  });
+  // Combine shop data from Storefront API with shop analytics
+  // CRITICAL: Ensure shopId is the first property and is always present
+  const shopObject = {
+    shopId: shopAnalytics.shopId, // CRITICAL: shopId must be first and always present
+    acceptedLanguage: shopAnalytics.acceptedLanguage as 'HE',
+    currency: shopAnalytics.currency as 'ILS',
+    hydrogenSubchannelId: shopAnalytics.hydrogenSubchannelId,
+    ...(shop && {
+      id: shop.id,
+      name: shop.name,
+      primaryDomain: shop.primaryDomain,
+    }),
+  };
 
-  // DEBUG: Log final shopId before returning
-  console.log('[Debug] Final shopId before returning JSON:', shopAnalytics?.shopId);
+  // #region agent log
+  console.log('[Debug] Loader - BEFORE creating shopObject:', {
+    shopAnalytics,
+    shopAnalyticsShopId: shopAnalytics?.shopId,
+    shopAnalyticsShopIdType: typeof shopAnalytics?.shopId,
+    shopAnalyticsShopIdLength: shopAnalytics?.shopId?.length,
+    shop,
+    shopId: shop?.id,
+    shopName: shop?.name,
+  });
+  // #endregion
+
+  // #region agent log
+  console.log('[Debug] Loader - AFTER creating shopObject:', {
+    shopObject,
+    shopObjectShopId: shopObject.shopId,
+    shopObjectShopIdType: typeof shopObject.shopId,
+    shopObjectShopIdLength: shopObject.shopId?.length,
+    shopObjectKeys: Object.keys(shopObject),
+    shopObjectStringified: JSON.stringify(shopObject),
+  });
+  // #endregion
 
   const consent = {
     checkoutDomain: envVars.PUBLIC_CHECKOUT_DOMAIN || (envVars.PUBLIC_STORE_DOMAIN?.replace('.myshopify.com', '') + '.myshopify.com') || '',
     storefrontAccessToken: envVars.PUBLIC_STOREFRONT_API_TOKEN || '',
-    withPrivacyBanner: false, // Disable to avoid Shopify object redefinition
+    withPrivacyBanner: false,
   };
 
-  const returnData = {
-    cart: cartPromise as any, // Type assertion for Analytics.Provider compatibility
-    shop: shopAnalytics as any, // Type assertion for Analytics.Provider compatibility
+  // #region agent log
+  console.log('[Debug] Loader - BEFORE return defer:', {
+    shopObject,
+    shopObjectShopId: shopObject.shopId,
+    shopObjectShopIdType: typeof shopObject.shopId,
+    shopObjectShopIdLength: shopObject.shopId?.length,
+    shopObjectStringified: JSON.stringify(shopObject),
+  });
+  // #endregion
+
+  // #region agent log
+  console.log('[Debug] Loader - FINAL shopObject before defer:', {
+    shopObject,
+    shopObjectShopId: shopObject.shopId,
+    shopObjectShopIdType: typeof shopObject.shopId,
+    shopObjectShopIdLength: shopObject.shopId?.length,
+    shopObjectIsPromise: shopObject instanceof Promise,
+    shopObjectStringified: JSON.stringify(shopObject),
+  });
+  // #endregion
+
+  // Use defer for cart (async Promise), but ensure shop is properly serialized
+  // Analytics.Provider needs shop to be a plain object, not a Promise
+  return defer({
+    shop: shopObject, // Plain object - Analytics.Provider needs this synchronously
+    cart: cart && typeof cart === 'object' && 'get' in cart ? (cart as any).get() : Promise.resolve(null),
     consent,
-  };
-
-  // DEBUG: Log what we're serializing to JSON
-  console.log('[Debug] Return data before json():', {
-    hasShop: !!returnData.shop,
-    shop: returnData.shop,
-    shopId: returnData.shop?.shopId,
-    shopIdType: typeof returnData.shop?.shopId,
-    shopStringified: JSON.stringify(returnData.shop),
   });
-
-  // #region agent log
-  // Server-side log (will be written to console, not HTTP endpoint)
-  console.log('[Agent Debug] Loader returning shop data:', JSON.stringify({
-    location: 'root.tsx:205',
-    message: 'Loader - BEFORE json() return',
-    data: {
-      shop: returnData.shop,
-      shopId: returnData.shop?.shopId,
-      shopIdType: typeof returnData.shop?.shopId,
-      shopStringified: JSON.stringify(returnData.shop),
-    },
-    timestamp: Date.now(),
-    sessionId: 'debug-session',
-    runId: 'run1',
-    hypothesisId: 'A',
-  }));
-  // #endregion
-
-  return json(returnData);
 }
 
-// Separate component for Analytics Provider to avoid IIFE in JSX
-function AnalyticsProviderWrapper({ data }: { data: any }) {
-  // Create validated shop object with guaranteed shopId (production-safe)
-  const validatedShop = useMemo(() => {
-    // CRITICAL: Always ensure shopId exists and is a non-empty string
-    let shopId = '1000075164'; // Default fallback
-    
-    if (data.shop && typeof data.shop === 'object' && data.shop.shopId) {
-      const extractedShopId = String(data.shop.shopId).trim();
-      if (extractedShopId !== '') {
-        shopId = extractedShopId;
-      }
-    }
-    
-    // Return validated shop object with guaranteed shopId
-    // CRITICAL: Ensure shopId is always a non-empty string (Shopify Hydrogen requirement)
-    const finalShopId = String(shopId).trim() || '1000075164';
-    
-    const validatedShopObject = {
-      shopId: finalShopId,
-      acceptedLanguage: (data.shop?.acceptedLanguage || 'HE') as 'HE',
-      currency: data.shop?.currency || 'ILS',
-      hydrogenSubchannelId: String(data.shop?.hydrogenSubchannelId || '0'),
-    };
-    
-    // DEBUG: Log the validated shop object structure
-    console.log('[Debug] ValidatedShop object structure:', {
-      ...validatedShopObject,
-      shopIdType: typeof validatedShopObject.shopId,
-      shopIdIsString: typeof validatedShopObject.shopId === 'string',
-      shopIdLength: validatedShopObject.shopId.length,
-    });
-    
-    return validatedShopObject;
-  }, [data.shop]);
-  
-  // Log validated shop object
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      console.log('[Analytics] 🔍 Validated shop object for Analytics.Provider:', {
-        shopId: validatedShop.shopId,
-        shopIdLength: validatedShop.shopId.length,
-        shopIdType: typeof validatedShop.shopId,
-        hasShopId: !!validatedShop.shopId,
-      });
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'root.tsx:254',message:'useEffect validatedShop - AFTER useMemo',data:{validatedShop,shopId:validatedShop.shopId,shopIdType:typeof validatedShop.shopId,hasShopId:!!validatedShop.shopId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
-    }
-  }, [validatedShop]);
-  
-  // Additional validation - ensure shopId is set before rendering
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (!validatedShop.shopId || validatedShop.shopId.trim() === '') {
-        console.error('[Analytics] ❌ CRITICAL: shopId is empty in AnalyticsProviderWrapper!');
-        console.error('[Analytics] This will cause PerfKit "shopId is missing" error');
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'root.tsx:259',message:'ERROR: shopId is empty in validatedShop',data:{validatedShop,shopId:validatedShop.shopId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
-      } else {
-        console.log('[Analytics] ✅ shopId is valid before Analytics.Provider render:', validatedShop.shopId);
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'root.tsx:263',message:'shopId validation passed',data:{shopId:validatedShop.shopId,shopIdType:typeof validatedShop.shopId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-      }
-    }
-  }, [validatedShop.shopId]);
-  
-  // DEBUG: Log exactly what we're passing to Analytics.Provider
-  console.log('[Debug] Analytics.Provider shop prop:', {
-    shop: validatedShop,
-    shopId: validatedShop.shopId,
-    shopIdType: typeof validatedShop.shopId,
-    shopIdLength: validatedShop.shopId?.length,
-    shopIdIsString: typeof validatedShop.shopId === 'string',
-    shopIdIsEmpty: !validatedShop.shopId || validatedShop.shopId.trim() === '',
-    fullShopObject: JSON.stringify(validatedShop),
-  });
-  
-  // CRITICAL: Hardcode shop object to satisfy Shopify Analytics validator
-  // Do not use variables - hardcode all values to avoid serialization issues
-  const shopForProvider = {
-    shopId: '1000075164',
-    currency: 'ILS' as const,
-    acceptedLanguage: 'HE' as 'HE',
-    hydrogenSubchannelId: '0',
-  };
-  
-  // DEBUG: Log the exact shop object being passed
-  console.log('[Debug] Shop object for Analytics.Provider (hardcoded):', {
-    shopForProvider,
-    shopId: shopForProvider.shopId,
-    shopIdType: typeof shopForProvider.shopId,
-    shopIdLength: shopForProvider.shopId.length,
-    isString: typeof shopForProvider.shopId === 'string',
-    stringified: JSON.stringify(shopForProvider),
-  });
-  
-  // #region agent log
-  if (typeof window !== 'undefined') {
-    fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'root.tsx:298',message:'AnalyticsProviderWrapper render - BEFORE Analytics.Provider',data:{shopForProvider,shopId:shopForProvider.shopId,shopIdType:typeof shopForProvider.shopId,hasShopId:!!shopForProvider.shopId,shopStringified:JSON.stringify(shopForProvider)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  }
-  // #endregion
-  
-  // #region agent log
-  if (typeof window !== 'undefined') {
-    fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'root.tsx:299',message:'AnalyticsProviderWrapper render - shop object structure check',data:{shopKeys:Object.keys(shopForProvider),shopValues:Object.values(shopForProvider),shopIdExists:'shopId' in shopForProvider,shopIdValue:shopForProvider.shopId,shopIdDirectAccess:shopForProvider['shopId']},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-  }
-  // #endregion
-  
-  // REMOVED: stableShop - not used anymore, using shopProp instead
-  
-  // Create a wrapper that ensures shop prop is always accessible
-  // CRITICAL: Do NOT freeze the object - Analytics.Provider needs to access it
-  const shopProp = useMemo(() => {
-    // Ensure shopId is always a string and never undefined
-    const shop = {
-      shopId: '1000075164', // Direct string, no String() wrapper
-      currency: 'ILS' as const,
-      acceptedLanguage: 'HE' as 'HE',
-      hydrogenSubchannelId: '0',
-    };
-  
-    // #region agent log
-    if (typeof window !== 'undefined') {
-      fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'root.tsx:340',message:'shopProp useMemo - final shop object (NOT FROZEN)',data:{shop,shopId:shop.shopId,shopIdType:typeof shop.shopId,shopIdLength:shop.shopId.length,hasShopId:!!shop.shopId,shopIdIsString:typeof shop.shopId === 'string',shopFrozen:Object.isFrozen(shop),shopKeys:Object.keys(shop)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-    }
-    // #endregion
-  
-    return shop;
-  }, []);
-  
-  // #region agent log
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'root.tsx:355',message:'AnalyticsProviderWrapper - shop prop BEFORE Analytics.Provider render',data:{shopProp,shopId:shopProp.shopId,shopIdType:typeof shopProp.shopId,hasShopId:!!shopProp.shopId,shopIdAccess:shopProp['shopId'],shopFrozen:Object.isFrozen(shopProp),shopKeys:Object.keys(shopProp)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    }
-  }, [shopProp]);
-  // #endregion
-  
-  return (
-    <Analytics.Provider
-      cart={data.cart}
-      shop={shopProp}
-      consent={data.consent}
-      disableThrowOnError={true}
-    >
-      {/* #region agent log */}
-      {typeof window !== 'undefined' && (() => {
-        fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'root.tsx:375',message:'AnalyticsProviderWrapper render - INSIDE Analytics.Provider children',data:{shopPropPassed:!!shopProp,shopIdInShop:shopProp.shopId,shopPropKeys:Object.keys(shopProp)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        return null;
-      })()}
-      {/* #endregion */}
-      <Outlet />
-    </Analytics.Provider>
-  );
-}
 
 export default function App() {
   const data = useLoaderData<typeof loader>();
-  const location = useLocation();
-  
-  // DEBUG: Log what Analytics Provider receives
-  console.log('[Debug] Analytics Provider Received:', data.shop);
   
   // #region agent log
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'root.tsx:315',message:'App component - data from loader',data:{hasShop:!!data.shop,shop:data.shop,shopId:data.shop?.shopId,shopIdType:typeof data.shop?.shopId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    }
-  }, [data]);
+  if (typeof window !== 'undefined') {
+    const shopIsPromise = data.shop instanceof Promise;
+    const shopValue = shopIsPromise ? 'PROMISE' : data.shop;
+    fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'root.tsx:239',message:'App component - data from loader',data:{hasShop:!!data.shop,shopIsPromise,shop:shopValue,shopId:shopIsPromise?'N/A':data.shop?.shopId,shopIdType:shopIsPromise?'N/A':typeof data.shop?.shopId,shopIdLength:shopIsPromise?'N/A':data.shop?.shopId?.length,shopKeys:shopIsPromise?[]:data.shop?Object.keys(data.shop):[],shopStringified:shopIsPromise?'PROMISE':JSON.stringify(data.shop)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  }
   // #endregion
   
-  // Debug logging (client-side) - CRITICAL for debugging shopId issues
+  // #region agent log
   if (typeof window !== 'undefined') {
-    console.log('[Analytics] 🔍 Client-side shop data (before Analytics.Provider):', {
-      hasShop: !!data.shop,
-      shop: data.shop,
-      shopId: data.shop?.shopId,
-      shopIdType: typeof data.shop?.shopId,
-      shopIdLength: data.shop?.shopId?.length,
-      shopIdIsEmpty: !data.shop?.shopId || data.shop.shopId.trim() === '',
-      hasConsent: !!data.consent,
-      consent: data.consent,
-    });
-    
-    // Validate shopId before passing to Analytics.Provider
-    if (!data.shop?.shopId || data.shop.shopId.trim() === '') {
-      console.error('[Analytics] ❌ CRITICAL ERROR: shopId is missing or empty on client-side!');
-      console.error('[Analytics] This will cause "Missing shop.shopId configuration" error');
-    } else {
-      console.log('[Analytics] ✅ shopId is valid:', data.shop.shopId);
-    }
+    const shopIsPromise = data.shop instanceof Promise;
+    fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'root.tsx:247',message:'App component - BEFORE Analytics.Provider',data:{shopIsPromise,shopForProvider:shopIsPromise?'PROMISE':data.shop,shopId:shopIsPromise?'N/A':data.shop?.shopId,shopIdType:shopIsPromise?'N/A':typeof data.shop?.shopId,shopIdLength:shopIsPromise?'N/A':data.shop?.shopId?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
   }
+  // #endregion
+  
+  // CRITICAL: Ensure shop object is properly structured for Analytics.Provider
+  // Analytics.Provider expects shop to have shopId as a direct property
+  const shopForAnalytics = data.shop && typeof data.shop === 'object' && !(data.shop instanceof Promise)
+    ? {
+        shopId: String(data.shop.shopId || '1000075164').trim(),
+        acceptedLanguage: (data.shop.acceptedLanguage || 'HE') as 'HE',
+        currency: (data.shop.currency || 'ILS') as 'ILS',
+        hydrogenSubchannelId: String(data.shop.hydrogenSubchannelId || '0'),
+        ...(data.shop.id && { id: data.shop.id }),
+        ...(data.shop.name && { name: data.shop.name }),
+        ...(data.shop.primaryDomain && { primaryDomain: data.shop.primaryDomain }),
+      }
+    : {
+        shopId: '1000075164',
+        acceptedLanguage: 'HE' as 'HE',
+        currency: 'ILS' as 'ILS',
+        hydrogenSubchannelId: '0',
+      };
   
   // Generate CSS variables from active theme
   const cssVariables = `
@@ -457,6 +336,7 @@ export default function App() {
     }
   `.trim();
 
+
   return (
     <html lang="he" dir="rtl">
       <head>
@@ -465,6 +345,7 @@ export default function App() {
         <Meta />
         <Links />
         <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
+        <MetaPixelScript />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -502,9 +383,24 @@ export default function App() {
         />
       </head>
       <body style={{ fontFamily: 'var(--font-family-main)' }}>
-        <AnalyticsProviderWrapper data={data} />
-        <ScrollRestoration />
-        <Scripts />
+        {/* #region agent log */}
+        {typeof window !== 'undefined' && (() => {
+          const shopForProvider = data.shop;
+          fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'root.tsx:361',message:'Analytics.Provider - shop prop value',data:{shop:shopForProvider,shopId:shopForProvider?.shopId,shopIdType:typeof shopForProvider?.shopId,shopIdLength:shopForProvider?.shopId?.length,shopKeys:shopForProvider?Object.keys(shopForProvider):[],shopStringified:JSON.stringify(shopForProvider),shopIsFrozen:Object.isFrozen(shopForProvider),shopIsSealed:Object.isSealed(shopForProvider)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+          return null;
+        })()}
+        {/* #endregion */}
+        <Analytics.Provider
+          cart={data.cart}
+          shop={shopForAnalytics}
+          consent={data.consent}
+          disableThrowOnError={true}
+        >
+          <MetaPixelAnalyticsIntegration />
+          <Outlet />
+          <ScrollRestoration />
+          <Scripts />
+        </Analytics.Provider>
       </body>
     </html>
   );
