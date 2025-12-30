@@ -2,6 +2,7 @@ import { json, type LoaderFunctionArgs } from '@shopify/remix-oxygen';
 import { useLoaderData } from '@remix-run/react';
 import { useAnalytics } from '@shopify/hydrogen';
 import { useEffect } from 'react';
+import { trackViewContent } from '~/lib/analytics';
 import { storefrontQuery } from '~/lib/shopify.server';
 import { Layout } from '~/components/Layout';
 import { HeroVideoCarousel } from '~/components/HeroVideoCarousel';
@@ -179,7 +180,7 @@ export default function Index() {
       console.error('Error publishing page_viewed:', error);
     }
 
-    // Publish product_viewed event
+    // Publish product_viewed event (Shopify Analytics)
     if (selectedVariant) {
       try {
         analytics.publish('product_viewed', {
@@ -198,6 +199,22 @@ export default function Index() {
         });
       } catch (error) {
         console.error('Error publishing product_viewed:', error);
+      }
+    }
+
+    // Track ViewContent event for Meta Pixel
+    if (selectedVariant && typeof window !== 'undefined') {
+      try {
+        trackViewContent({
+          content_name: product.title,
+          content_ids: [product.id],
+          content_type: 'product',
+          value: parseFloat(selectedVariant.price.amount),
+          currency: 'ILS',
+        });
+        console.log('[Meta Pixel] ✅ Tracked ViewContent for product:', product.title);
+      } catch (error) {
+        console.error('[Meta Pixel] ❌ Error tracking ViewContent:', error);
       }
     }
   }, [product, analytics?.publish]);

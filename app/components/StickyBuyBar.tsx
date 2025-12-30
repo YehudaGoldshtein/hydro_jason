@@ -4,6 +4,7 @@ import { useLoaderData } from '@remix-run/react';
 import { useAnalytics } from '@shopify/hydrogen';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
+import { trackAddToCart } from '~/lib/analytics';
 
 export function StickyBuyBar() {
   const [visible, setVisible] = useState(true);
@@ -55,6 +56,23 @@ export function StickyBuyBar() {
           });
         } catch (error) {
           console.error('Error publishing product_added_to_cart:', error);
+        }
+      }
+
+      // Track AddToCart event for Meta Pixel
+      if (product && defaultVariant && typeof window !== 'undefined') {
+        try {
+          trackAddToCart({
+            content_name: product.title,
+            content_ids: [product.id],
+            content_type: 'product',
+            value: parseFloat(defaultVariant.price.amount),
+            currency: 'ILS',
+            quantity: 1,
+          });
+          console.log('[Meta Pixel] ✅ Tracked AddToCart from StickyBuyBar:', product.title);
+        } catch (error) {
+          console.error('[Meta Pixel] ❌ Error tracking AddToCart:', error);
         }
       }
 

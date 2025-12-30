@@ -316,7 +316,7 @@ export default function App() {
         <Meta />
         <Links />
         <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
-        {/* Meta Pixel - Wait for script to load before initializing */}
+        {/* Meta Pixel - Initialize immediately (uses queue if script not loaded yet) */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -330,8 +330,7 @@ export default function App() {
                 if(window.fbq){
                   try{
                     window.fbq('init', '1855054518452200');
-                    window.fbq('track', 'PageView');
-                    console.log('[Meta Pixel] ✅ Initialized and tracked PageView');
+                    console.log('[Meta Pixel] ✅ Script loaded and initialized');
                   }catch(e){
                     console.error('[Meta Pixel] ❌ Error initializing:', e);
                   }
@@ -343,6 +342,11 @@ export default function App() {
               s=b.getElementsByTagName(e)[0];
               s.parentNode.insertBefore(t,s)}(window, document,'script',
               'https://connect.facebook.net/en_US/fbevents.js');
+              // Initialize and track immediately - will be queued if script not loaded yet
+              if(typeof fbq!=='undefined'){
+                fbq('init', '1855054518452200');
+                fbq('track', 'PageView');
+              }
             `,
           }}
         />

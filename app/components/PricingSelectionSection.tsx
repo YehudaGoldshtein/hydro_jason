@@ -5,6 +5,7 @@ import { useAnalytics } from '@shopify/hydrogen';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
 import { useSelectedVariant } from '~/lib/SelectedVariantContext';
+import { trackAddToCart } from '~/lib/analytics';
 
 interface PricingOption {
   id: string;
@@ -190,6 +191,23 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
         });
       } catch (error) {
         console.error('Error publishing product_added_to_cart:', error);
+      }
+    }
+
+    // Track AddToCart event for Meta Pixel
+    if (product && selectedVariant && typeof window !== 'undefined') {
+      try {
+        trackAddToCart({
+          content_name: product.title,
+          content_ids: [product.id],
+          content_type: 'product',
+          value: parseFloat(selectedVariant.price.amount) * quantity,
+          currency: 'ILS',
+          quantity: quantity,
+        });
+        console.log('[Meta Pixel] ✅ Tracked AddToCart:', product.title, 'Quantity:', quantity);
+      } catch (error) {
+        console.error('[Meta Pixel] ❌ Error tracking AddToCart:', error);
       }
     }
 
