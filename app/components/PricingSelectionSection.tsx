@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { Check, Circle, Sparkles, Star, CheckCircle2, ThumbsUp, Truck } from 'lucide-react';
 import { useFetcher } from '@remix-run/react';
-import { useAnalytics } from '@shopify/hydrogen';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
 import { useSelectedVariant } from '~/lib/SelectedVariantContext';
@@ -47,7 +46,6 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
   // Use Context to share selection across all components
   const { selectedVariantIndex: selectedIdx, setSelectedVariantIndex: setSelectedIdx } = useSelectedVariant();
   const fetcher = useFetcher<{ success: boolean; checkoutUrl?: string; error?: string }>();
-  const analytics = useAnalytics();
   const { pricing: pricingMedia } = landingMedia;
 
   // Log product data for debugging
@@ -170,28 +168,6 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
 
     // Quantity is based on selected option: index 0 = 1 kit, index 1 = 2 kits, index 2 = 3 kits
     const quantity = selectedIdx + 1;
-
-    // Track product_added_to_cart event using Shopify Analytics
-    if (product && selectedVariant && analytics?.publish) {
-      try {
-        analytics.publish('product_added_to_cart', {
-          url: typeof window !== 'undefined' ? window.location.href : '',
-          products: [
-            {
-              id: product.id,
-              title: product.title,
-              price: selectedVariant.price.amount,
-              variantId: selectedVariant.id,
-              variantTitle: selectedVariant.title,
-              quantity: quantity,
-              vendor: product.vendor || '',
-            },
-          ],
-        });
-      } catch (error) {
-        console.error('Error publishing product_added_to_cart:', error);
-      }
-    }
 
     const formData = new FormData();
     formData.append('cartAction', 'ADD_TO_CART');

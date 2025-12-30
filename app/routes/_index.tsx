@@ -1,7 +1,5 @@
 import { json, type LoaderFunctionArgs } from '@shopify/remix-oxygen';
 import { useLoaderData } from '@remix-run/react';
-import { useAnalytics } from '@shopify/hydrogen';
-import { useEffect } from 'react';
 import { storefrontQuery } from '~/lib/shopify.server';
 import { Layout } from '~/components/Layout';
 import { HeroVideoCarousel } from '~/components/HeroVideoCarousel';
@@ -161,46 +159,6 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
 export default function Index() {
   const { product, cartCount } = useLoaderData<typeof loader>();
-  const analytics = useAnalytics();
-  
-  // Track page_viewed and product_viewed events when product is loaded
-  useEffect(() => {
-    if (!product || !analytics?.publish) return;
-    
-    const selectedVariant = product.variants?.nodes?.[0];
-    
-    // Publish page_viewed event
-    try {
-      analytics.publish('page_viewed', {
-        url: typeof window !== 'undefined' ? window.location.href : '',
-        path: typeof window !== 'undefined' ? window.location.pathname : '',
-      });
-    } catch (error) {
-      console.error('Error publishing page_viewed:', error);
-    }
-
-    // Publish product_viewed event (Shopify Analytics)
-    if (selectedVariant) {
-      try {
-        analytics.publish('product_viewed', {
-          url: typeof window !== 'undefined' ? window.location.href : '',
-          products: [
-            {
-              id: product.id,
-              title: product.title,
-              price: selectedVariant.price.amount,
-              variantId: selectedVariant.id,
-              variantTitle: selectedVariant.title,
-              quantity: 1,
-              vendor: product.vendor || '',
-            },
-          ],
-        });
-      } catch (error) {
-        console.error('Error publishing product_viewed:', error);
-      }
-    }
-  }, [product, analytics?.publish]);
 
   return (
     <SelectedVariantProvider>
