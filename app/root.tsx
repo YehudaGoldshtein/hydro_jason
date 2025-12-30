@@ -6,6 +6,15 @@ import { json } from '@shopify/remix-oxygen';
 import { activeTheme } from './configs/theme-active';
 import styles from './styles/app.css?url';
 
+// Declare global types for Meta Pixel
+declare global {
+  interface Window {
+    fbq?: any;
+    fb_initialized?: boolean;
+    fb_pageview_tracked?: string;
+  }
+}
+
 export const links: LinksFunction = () => {
   // Dynamically generate Google Fonts URL from active theme
   const googleFontsUrl = activeTheme.typography.googleFonts
@@ -230,6 +239,108 @@ function AnalyticsProviderWrapper({ data }: { data: any }) {
 export default function App() {
   const data = useLoaderData<typeof loader>();
   
+  // Meta Pixel initialization - Production-ready with useEffect
+  useEffect(() => {
+    // SSR check - only run on client
+    if (typeof window === 'undefined') return;
+    
+    // Hardcoded Pixel ID for production
+    const PIXEL_ID = '1855054518452200';
+    
+    // Check if already initialized
+    if (window.fb_initialized) {
+      console.log('[Meta Pixel] Already initialized, skipping');
+      return;
+    }
+    
+    // Load Meta Pixel script dynamically using Facebook's base code
+    const loadMetaPixel = () => {
+      // Check if script already exists
+      if (document.querySelector('script[src*="fbevents.js"]')) {
+        console.log('[Meta Pixel] Script already loaded');
+        initializePixel(PIXEL_ID);
+        return;
+      }
+      
+      // Check if fbq already exists (might be loaded by another script)
+      if (window.fbq) {
+        console.log('[Meta Pixel] fbq already exists');
+        initializePixel(PIXEL_ID);
+        return;
+      }
+      
+      // Inject Facebook Pixel base code
+      const baseCode = `
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+      `;
+      
+      const script = document.createElement('script');
+      script.innerHTML = baseCode;
+      script.onload = () => {
+        console.log('[Meta Pixel] Base code injected, waiting for fbq...');
+        initializePixel(PIXEL_ID);
+      };
+      
+      // Insert script into head
+      const firstScript = document.getElementsByTagName('script')[0];
+      if (firstScript && firstScript.parentNode) {
+        firstScript.parentNode.insertBefore(script, firstScript);
+      } else {
+        document.head.appendChild(script);
+      }
+      
+      // Also try to initialize after a short delay in case onload doesn't fire
+      setTimeout(() => {
+        if (window.fbq) {
+          initializePixel(PIXEL_ID);
+        }
+      }, 500);
+    };
+    
+    // Initialize Pixel and track PageView
+    const initializePixel = (pixelId: string) => {
+      // Wait for fbq to be available
+      const checkFbq = () => {
+        if (typeof window !== 'undefined' && window.fbq) {
+          // Initialize only once
+          if (!window.fb_initialized) {
+            window.fb_initialized = true;
+            window.fbq('init', pixelId);
+            console.log('[Meta Pixel] ✅ Initialized with ID:', pixelId);
+            
+            // Track PageView only once per route - ensure it fires after init is complete
+            const currentPath = window.location.pathname;
+            if (!window.fb_pageview_tracked || window.fb_pageview_tracked !== currentPath) {
+              window.fb_pageview_tracked = currentPath;
+              // Small delay to ensure init is fully complete before tracking PageView
+              setTimeout(() => {
+                if (window.fbq) {
+                  window.fbq('track', 'PageView');
+                  console.log('[Meta Pixel] ✅ PageView tracked for:', currentPath);
+                }
+              }, 50);
+            }
+          }
+        } else {
+          // Retry after 100ms if fbq not ready
+          setTimeout(checkFbq, 100);
+        }
+      };
+      
+      checkFbq();
+    };
+    
+    // Start loading
+    loadMetaPixel();
+  }, []); // Empty dependency array - run only once on mount
+  
   // Debug logging (client-side) - CRITICAL for debugging shopId issues
   if (typeof window !== 'undefined') {
     console.log('[Analytics] 🔍 Client-side shop data (before Analytics.Provider):', {
@@ -307,38 +418,7 @@ export default function App() {
         <Meta />
         <Links />
         <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
-        {/* Meta Pixel Base Code */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              !function(f,b,e,v,n,t,s)
-              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-              n.queue=[];t=b.createElement(e);t.async=!0;
-              t.src=v;s=b.getElementsByTagName(e)[0];
-              s.parentNode.insertBefore(t,s)}(window, document,'script',
-              'https://connect.facebook.net/en_US/fbevents.js');
-              
-              // Initialize only once using global flag
-              if(typeof window!=='undefined'&&!window.fb_initialized){
-                window.fb_initialized=true;
-                fbq('init', '1855054518452200');
-                console.log('[Meta Pixel] ✅ Initialized (once)');
-              }
-              
-              // Track PageView only once per route using current pathname
-              if(typeof window!=='undefined'&&window.fbq){
-                var currentPath=window.location.pathname;
-                if(!window.fb_pageview_tracked||window.fb_pageview_tracked!==currentPath){
-                  window.fb_pageview_tracked=currentPath;
-                  fbq('track', 'PageView');
-                  console.log('[Meta Pixel] ✅ PageView tracked for:', currentPath);
-                }
-              }
-            `,
-          }}
-        />
+        {/* Meta Pixel Base Code - Loaded via useEffect for production compatibility */}
         <noscript>
           <img
             height="1"
