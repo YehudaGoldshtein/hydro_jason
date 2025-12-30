@@ -1,9 +1,9 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from '@remix-run/react';
-import type { LinksFunction, MetaFunction } from '@shopify/remix-oxygen';
-import { useEffect } from 'react';
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from '@remix-run/react';
+import type { LinksFunction, MetaFunction, LoaderFunctionArgs } from '@shopify/remix-oxygen';
+import { Analytics, getShopAnalytics } from '@shopify/hydrogen';
+import { json } from '@shopify/remix-oxygen';
 import { activeTheme } from './configs/theme-active';
 import styles from './styles/app.css?url';
-import { initMetaPixel, trackPageView } from './lib/analytics';
 
 export const links: LinksFunction = () => {
   // Dynamically generate Google Fonts URL from active theme
@@ -40,12 +40,45 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+export async function loader({ context, request }: LoaderFunctionArgs) {
+  const { env } = context;
+  
+  // Try to get cart if available, otherwise use a promise that resolves to null
+  let cartPromise: Promise<any> | null = null;
+  if (context.cart) {
+    cartPromise = context.cart.get();
+  } else {
+    // Create a promise that resolves to null if cart context is not available
+    cartPromise = Promise.resolve(null);
+  }
+
+  // Create a minimal storefront-like object for getShopAnalytics
+  // We need shopId, currency, language, and hydrogenSubchannelId
+  const shopAnalytics = getShopAnalytics({
+    storefront: {
+      i18n: {
+        country: 'IL', // Israel
+        language: 'HE', // Hebrew
+      },
+    } as any,
+    publicStorefrontId: env.PUBLIC_STOREFRONT_ID || env.PUBLIC_STORE_DOMAIN?.replace('.myshopify.com', '') || '',
+  });
+
+  return json({
+    cart: cartPromise,
+    shop: shopAnalytics,
+    consent: {
+      checkoutDomain: env.PUBLIC_CHECKOUT_DOMAIN || env.PUBLIC_STORE_DOMAIN?.replace('.myshopify.com', '') + '.myshopify.com' || '',
+      storefrontAccessToken: env.PUBLIC_STOREFRONT_API_TOKEN || '',
+      withPrivacyBanner: true,
+      country: 'IL',
+      language: 'HE',
+    },
+  });
+}
+
 export default function App() {
-  // Initialize Meta Pixel on mount
-  useEffect(() => {
-    initMetaPixel();
-    trackPageView();
-  }, []);
+  const data = useLoaderData<typeof loader>();
 
   // Generate CSS variables from active theme
   const cssVariables = `
@@ -104,7 +137,13 @@ export default function App() {
         <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
       </head>
       <body style={{ fontFamily: 'var(--font-family-main)' }}>
-        <Outlet />
+        <Analytics.Provider
+          cart={data.cart}
+          shop={data.shop}
+          consent={data.consent}
+        >
+          <Outlet />
+        </Analytics.Provider>
         <ScrollRestoration />
         <Scripts />
       </body>

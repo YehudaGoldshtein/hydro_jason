@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useCheckout } from '~/lib/useCheckout';
 import { useLoaderData } from '@remix-run/react';
+import { useAnalytics } from '@shopify/hydrogen';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
-import { trackAddToCart } from '~/lib/analytics';
 
 export function StickyBuyBar() {
   const [visible, setVisible] = useState(true);
   const { goToCheckout, isSubmitting } = useCheckout();
   const { product } = useLoaderData<typeof import('~/routes/_index').loader>();
+  const { publish } = useAnalytics();
   const { productName, stockWarning, ctaButton, fallbackImageAlt } = activeContent.stickyBuyBar;
   const { stickyBuyBar: barMedia } = landingMedia;
 
@@ -35,16 +36,21 @@ export function StickyBuyBar() {
     console.log('✅ Using default variant (₪199):', defaultVariant);
     
     if (defaultVariant?.id) {
-      // Track AddToCart event (default quantity is 1)
+      // Track product_added_to_cart event using Shopify Analytics (default quantity is 1)
       if (product) {
-        const price = parseFloat(defaultVariant.price.amount);
-        trackAddToCart({
-          content_name: product.title,
-          content_ids: [product.id],
-          content_type: 'product',
-          value: price,
-          currency: defaultVariant.price.currencyCode || 'ILS',
-          quantity: 1,
+        publish('product_added_to_cart', {
+          url: window.location.href,
+          products: [
+            {
+              id: product.id,
+              title: product.title,
+              price: defaultVariant.price.amount,
+              variantId: defaultVariant.id,
+              variantTitle: defaultVariant.title,
+              quantity: 1,
+              vendor: product.vendor || '',
+            },
+          ],
         });
       }
 

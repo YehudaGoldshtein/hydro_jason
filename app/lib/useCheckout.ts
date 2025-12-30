@@ -1,6 +1,6 @@
 import { useFetcher } from '@remix-run/react';
 import { useEffect } from 'react';
-import { trackInitiateCheckout } from './analytics';
+import { useAnalytics } from '@shopify/hydrogen';
 
 /**
  * Hook for handling checkout actions
@@ -8,17 +8,18 @@ import { trackInitiateCheckout } from './analytics';
  */
 export function useCheckout() {
   const fetcher = useFetcher<{ success: boolean; checkoutUrl?: string; error?: string }>();
+  const { publish } = useAnalytics();
 
   // Handle redirect when checkout URL is received
   useEffect(() => {
     console.log('🔍 useCheckout - fetcher.data:', fetcher.data);
     if (fetcher.data?.success && fetcher.data.checkoutUrl) {
-      // Track InitiateCheckout event before redirecting
+      // Track checkout_started event using Shopify Analytics
       // Note: We track with basic info since we don't have full cart details here
-      trackInitiateCheckout({
-        content_type: 'product',
-        currency: 'ILS',
-        num_items: 1,
+      publish('checkout_started', {
+        url: fetcher.data.checkoutUrl,
+        cart: null, // Cart data not available here
+        prevCart: null,
       });
 
       console.log('✅ Redirecting to checkout:', fetcher.data.checkoutUrl);

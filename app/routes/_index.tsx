@@ -1,9 +1,9 @@
 import { json, type LoaderFunctionArgs } from '@shopify/remix-oxygen';
 import { useLoaderData } from '@remix-run/react';
 import { useEffect } from 'react';
+import { useAnalytics } from '@shopify/hydrogen';
 import { storefrontQuery } from '~/lib/shopify.server';
 import { Layout } from '~/components/Layout';
-import { trackViewContent } from '~/lib/analytics';
 import { HeroVideoCarousel } from '~/components/HeroVideoCarousel';
 import { ProductHeroSection } from '~/components/ProductHeroSection';
 import { Hero } from '~/components/Hero';
@@ -161,8 +161,9 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
 export default function Index() {
   const { product, cartCount } = useLoaderData<typeof loader>();
+  const { publish } = useAnalytics();
 
-  // Track ViewContent event when product is loaded
+  // Track page_viewed and product_viewed events when product is loaded
   useEffect(() => {
     if (product) {
       const selectedVariant = product.variants?.nodes?.[0];
@@ -170,15 +171,30 @@ export default function Index() {
         ? parseFloat(selectedVariant.price.amount)
         : undefined;
 
-      trackViewContent({
-        content_name: product.title,
-        content_ids: [product.id],
-        content_type: 'product',
-        value: price,
-        currency: selectedVariant?.price?.currencyCode || 'ILS',
+      // Publish page_viewed event
+      publish('page_viewed', {
+        url: window.location.href,
       });
+
+      // Publish product_viewed event
+      if (selectedVariant) {
+        publish('product_viewed', {
+          url: window.location.href,
+          products: [
+            {
+              id: product.id,
+              title: product.title,
+              price: selectedVariant.price.amount,
+              variantId: selectedVariant.id,
+              variantTitle: selectedVariant.title,
+              quantity: 1,
+              vendor: product.vendor || '',
+            },
+          ],
+        });
+      }
     }
-  }, [product]);
+  }, [product, publish]);
 
   return (
     <SelectedVariantProvider>
