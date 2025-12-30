@@ -1,7 +1,8 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from '@remix-run/react';
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData, useLocation } from '@remix-run/react';
 import type { LinksFunction, MetaFunction, LoaderFunctionArgs } from '@shopify/remix-oxygen';
-import { Analytics } from '@shopify/hydrogen';
+import { Analytics, useAnalytics } from '@shopify/hydrogen';
 import { json } from '@shopify/remix-oxygen';
+import { useEffect } from 'react';
 import { activeTheme } from './configs/theme-active';
 import styles from './styles/app.css?url';
 
@@ -74,6 +75,25 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   });
 }
 
+// Inner component that uses useAnalytics hook (must be inside Analytics.Provider)
+function AnalyticsPageView() {
+  const { publish } = useAnalytics();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Publish page_viewed event on every page load and navigation
+    // This will be picked up by Shopify Custom Pixel and forwarded to Facebook
+    if (typeof window !== 'undefined') {
+      publish('page_viewed', {
+        url: window.location.href,
+        path: location.pathname,
+      });
+    }
+  }, [publish, location.pathname]);
+
+  return null;
+}
+
 export default function App() {
   const data = useLoaderData<typeof loader>();
 
@@ -132,36 +152,6 @@ export default function App() {
         <Meta />
         <Links />
         <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
-        {/* Safe Shopify object initialization to prevent redefinition errors */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                if (typeof window !== 'undefined') {
-                  // Safely initialize window.Shopify if it doesn't exist
-                  // Use assignment instead of defineProperty to avoid conflicts
-                  if (!window.Shopify) {
-                    window.Shopify = {};
-                  }
-                  // Prevent Object.defineProperty from redefining Shopify
-                  // Store original defineProperty
-                  const originalDefineProperty = Object.defineProperty;
-                  Object.defineProperty = function(obj, prop, descriptor) {
-                    // If trying to define 'Shopify' on window and it already exists, skip
-                    if (obj === window && prop === 'Shopify' && window.Shopify) {
-                      // Merge properties instead of redefining
-                      if (descriptor.value && typeof descriptor.value === 'object') {
-                        Object.assign(window.Shopify, descriptor.value);
-                      }
-                      return window;
-                    }
-                    return originalDefineProperty.call(this, obj, prop, descriptor);
-                  };
-                }
-              })();
-            `,
-          }}
-        />
       </head>
       <body style={{ fontFamily: 'var(--font-family-main)' }}>
         <Analytics.Provider
@@ -170,6 +160,7 @@ export default function App() {
           consent={data.consent}
           disableThrowOnError={true}
         >
+          <AnalyticsPageView />
           <Outlet />
         </Analytics.Provider>
         <ScrollRestoration />
