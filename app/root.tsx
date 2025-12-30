@@ -219,16 +219,11 @@ function AnalyticsProviderWrapper({ data }: { data: any }) {
 export default function App() {
   const data = useLoaderData<typeof loader>();
   
-  // Initialize Meta Pixel once on client-side mount
+  // Meta Pixel is now loaded directly in <head> - no need for useEffect
+  // Keeping this for backwards compatibility and debugging
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      console.log('[Meta Pixel] Initializing Meta Pixel...');
-      try {
-        initMetaPixel();
-        console.log('[Meta Pixel] initMetaPixel called successfully');
-      } catch (error) {
-        console.error('[Meta Pixel] Error calling initMetaPixel:', error);
-      }
+    if (typeof window !== 'undefined' && window.fbq) {
+      console.log('[Meta Pixel] ✅ Meta Pixel is loaded and ready');
     }
   }, []);
   
@@ -309,6 +304,32 @@ export default function App() {
         <Meta />
         <Links />
         <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
+        {/* Meta Pixel - Simple and reliable approach */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              !function(f,b,e,v,n,t,s)
+              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+              n.queue=[];t=b.createElement(e);t.async=!0;
+              t.src=v;s=b.getElementsByTagName(e)[0];
+              s.parentNode.insertBefore(t,s)}(window, document,'script',
+              'https://connect.facebook.net/en_US/fbevents.js');
+              fbq('init', '1855054518452200');
+              fbq('track', 'PageView');
+            `,
+          }}
+        />
+        <noscript>
+          <img 
+            height="1" 
+            width="1" 
+            style={{display: 'none'}}
+            src="https://www.facebook.com/tr?id=1855054518452200&ev=PageView&noscript=1"
+            alt=""
+          />
+        </noscript>
         <script
           dangerouslySetInnerHTML={{
             __html: `
