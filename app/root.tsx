@@ -1,5 +1,5 @@
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from '@remix-run/react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { LinksFunction, MetaFunction, LoaderFunctionArgs } from '@shopify/remix-oxygen';
 import { Analytics, getShopAnalytics } from '@shopify/hydrogen';
 import { json } from '@shopify/remix-oxygen';
@@ -172,6 +172,50 @@ export async function loader({ context }: LoaderFunctionArgs) {
   return json(returnData);
 }
 
+// Separate component for Analytics Provider to avoid IIFE in JSX
+function AnalyticsProviderWrapper({ data }: { data: any }) {
+  // Create validated shop object with guaranteed shopId
+  const validatedShop = useMemo(() => {
+    if (data.shop && typeof data.shop === 'object') {
+      return {
+        ...data.shop,
+        shopId: (data.shop.shopId && data.shop.shopId.trim() !== '') 
+          ? data.shop.shopId.trim() 
+          : '1000075164',
+      };
+    }
+    return {
+      shopId: '1000075164',
+      acceptedLanguage: 'HE' as 'HE',
+      currency: 'ILS',
+      hydrogenSubchannelId: '0',
+    };
+  }, [data.shop]);
+  
+  // Log validated shop object
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('[Analytics] 🔍 Validated shop object for Analytics.Provider:', {
+        shopId: validatedShop.shopId,
+        shopIdLength: validatedShop.shopId.length,
+        shopIdType: typeof validatedShop.shopId,
+        hasShopId: !!validatedShop.shopId,
+      });
+    }
+  }, [validatedShop]);
+  
+  return (
+    <Analytics.Provider
+      cart={data.cart}
+      shop={validatedShop}
+      consent={data.consent}
+      disableThrowOnError={true}
+    >
+      <Outlet />
+    </Analytics.Provider>
+  );
+}
+
 export default function App() {
   const data = useLoaderData<typeof loader>();
   
@@ -302,44 +346,7 @@ export default function App() {
         />
       </head>
       <body style={{ fontFamily: 'var(--font-family-main)' }}>
-        {/* Ensure shop object has valid shopId before Analytics.Provider */}
-        {(() => {
-          // Create a validated shop object with guaranteed shopId
-          const validatedShop = data.shop && typeof data.shop === 'object' 
-            ? {
-                ...data.shop,
-                shopId: (data.shop.shopId && data.shop.shopId.trim() !== '') 
-                  ? data.shop.shopId.trim() 
-                  : '1000075164',
-              }
-            : {
-                shopId: '1000075164',
-                acceptedLanguage: 'HE' as 'HE',
-                currency: 'ILS',
-                hydrogenSubchannelId: '0',
-              };
-          
-          if (typeof window !== 'undefined') {
-            console.log('[Analytics] 🔍 Validated shop object for Analytics.Provider:', {
-              shopId: validatedShop.shopId,
-              shopIdLength: validatedShop.shopId.length,
-              shopIdType: typeof validatedShop.shopId,
-              hasShopId: !!validatedShop.shopId,
-            });
-          }
-          
-          return (
-            <Analytics.Provider
-              cart={data.cart}
-              shop={validatedShop}
-              consent={data.consent}
-              disableThrowOnError={true}
-            >
-              <Outlet />
-            </Analytics.Provider>
-          );
-        })()}
-          <Outlet />
+        <AnalyticsProviderWrapper data={data} />
         <ScrollRestoration />
         <Scripts />
       </body>
