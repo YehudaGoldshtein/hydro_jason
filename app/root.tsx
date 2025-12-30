@@ -1,6 +1,6 @@
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from '@remix-run/react';
 import type { LinksFunction, MetaFunction, LoaderFunctionArgs } from '@shopify/remix-oxygen';
-import { Analytics, getShopAnalytics } from '@shopify/hydrogen';
+import { Analytics } from '@shopify/hydrogen';
 import { json } from '@shopify/remix-oxygen';
 import { activeTheme } from './configs/theme-active';
 import styles from './styles/app.css?url';
@@ -52,17 +52,15 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     cartPromise = Promise.resolve(null);
   }
 
-  // Create a minimal storefront-like object for getShopAnalytics
-  // We need shopId, currency, language, and hydrogenSubchannelId
-  const shopAnalytics = getShopAnalytics({
-    storefront: {
-      i18n: {
-        country: 'IL', // Israel
-        language: 'HE', // Hebrew
-      },
-    } as any,
-    publicStorefrontId: env.PUBLIC_STOREFRONT_ID || env.PUBLIC_STORE_DOMAIN?.replace('.myshopify.com', '') || '',
-  });
+  // Create minimal shop analytics without using getShopAnalytics
+  // This avoids the "Cannot redefine property: Shopify" error
+  // getShopAnalytics tries to define Shopify object which may already exist
+  const shopAnalytics = {
+    shopId: env.PUBLIC_STOREFRONT_ID || env.PUBLIC_STORE_DOMAIN?.replace('.myshopify.com', '') || '',
+    acceptedLanguage: 'HE' as const,
+    currency: 'ILS' as const,
+    hydrogenSubchannelId: '0',
+  };
 
   return json({
     cart: cartPromise,
@@ -70,7 +68,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     consent: {
       checkoutDomain: env.PUBLIC_CHECKOUT_DOMAIN || env.PUBLIC_STORE_DOMAIN?.replace('.myshopify.com', '') + '.myshopify.com' || '',
       storefrontAccessToken: env.PUBLIC_STOREFRONT_API_TOKEN || '',
-      withPrivacyBanner: true,
+      withPrivacyBanner: false, // Disable to avoid Shopify object redefinition errors
       country: 'IL',
       language: 'HE',
     },
@@ -141,6 +139,7 @@ export default function App() {
           cart={data.cart}
           shop={data.shop}
           consent={data.consent}
+          disableThrowOnError={true}
         >
           <Outlet />
         </Analytics.Provider>
