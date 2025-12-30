@@ -1,7 +1,9 @@
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from '@remix-run/react';
-import type { LinksFunction } from '@shopify/remix-oxygen';
+import type { LinksFunction, MetaFunction } from '@shopify/remix-oxygen';
+import { useEffect } from 'react';
 import { activeTheme } from './configs/theme-active';
 import styles from './styles/app.css?url';
+import { initMetaPixel, trackPageView } from './lib/analytics';
 
 export const links: LinksFunction = () => {
   // Dynamically generate Google Fonts URL from active theme
@@ -13,6 +15,8 @@ export const links: LinksFunction = () => {
     .join('&');
   
   return [
+    // Favicon
+    { rel: 'icon', href: '/favicon.png', type: 'image/png' },
     { rel: 'stylesheet', href: styles },
     {
       rel: 'preconnect',
@@ -30,7 +34,19 @@ export const links: LinksFunction = () => {
   ];
 };
 
+export const meta: MetaFunction = () => {
+  return [
+    { title: 'FeedEase' },
+  ];
+};
+
 export default function App() {
+  // Initialize Meta Pixel on mount
+  useEffect(() => {
+    initMetaPixel();
+    trackPageView();
+  }, []);
+
   // Generate CSS variables from active theme
   const cssVariables = `
     :root {

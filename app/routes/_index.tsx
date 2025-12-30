@@ -1,7 +1,9 @@
 import { json, type LoaderFunctionArgs } from '@shopify/remix-oxygen';
 import { useLoaderData } from '@remix-run/react';
+import { useEffect } from 'react';
 import { storefrontQuery } from '~/lib/shopify.server';
 import { Layout } from '~/components/Layout';
+import { trackViewContent } from '~/lib/analytics';
 import { HeroVideoCarousel } from '~/components/HeroVideoCarousel';
 import { ProductHeroSection } from '~/components/ProductHeroSection';
 import { Hero } from '~/components/Hero';
@@ -159,6 +161,24 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
 export default function Index() {
   const { product, cartCount } = useLoaderData<typeof loader>();
+
+  // Track ViewContent event when product is loaded
+  useEffect(() => {
+    if (product) {
+      const selectedVariant = product.variants?.nodes?.[0];
+      const price = selectedVariant?.price?.amount
+        ? parseFloat(selectedVariant.price.amount)
+        : undefined;
+
+      trackViewContent({
+        content_name: product.title,
+        content_ids: [product.id],
+        content_type: 'product',
+        value: price,
+        currency: selectedVariant?.price?.currencyCode || 'ILS',
+      });
+    }
+  }, [product]);
 
   return (
     <SelectedVariantProvider>

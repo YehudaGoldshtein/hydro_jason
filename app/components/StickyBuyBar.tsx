@@ -3,6 +3,7 @@ import { useCheckout } from '~/lib/useCheckout';
 import { useLoaderData } from '@remix-run/react';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
+import { trackAddToCart } from '~/lib/analytics';
 
 export function StickyBuyBar() {
   const [visible, setVisible] = useState(true);
@@ -34,6 +35,19 @@ export function StickyBuyBar() {
     console.log('✅ Using default variant (₪199):', defaultVariant);
     
     if (defaultVariant?.id) {
+      // Track AddToCart event (default quantity is 1)
+      if (product) {
+        const price = parseFloat(defaultVariant.price.amount);
+        trackAddToCart({
+          content_name: product.title,
+          content_ids: [product.id],
+          content_type: 'product',
+          value: price,
+          currency: defaultVariant.price.currencyCode || 'ILS',
+          quantity: 1,
+        });
+      }
+
       console.log('🚀 Calling goToCheckout with variant 0 (₪199):', defaultVariant.id);
       goToCheckout(defaultVariant.id, 1);
     } else {

@@ -4,6 +4,7 @@ import { useFetcher } from '@remix-run/react';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
 import { useSelectedVariant } from '~/lib/SelectedVariantContext';
+import { trackAddToCart } from '~/lib/analytics';
 
 interface PricingOption {
   id: string;
@@ -168,6 +169,21 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
 
     // Quantity is based on selected option: index 0 = 1 kit, index 1 = 2 kits, index 2 = 3 kits
     const quantity = selectedIdx + 1;
+
+    // Track AddToCart event
+    if (product && selectedVariant) {
+      const price = parseFloat(selectedVariant.price.amount);
+      const totalValue = price * quantity;
+
+      trackAddToCart({
+        content_name: product.title,
+        content_ids: [product.id],
+        content_type: 'product',
+        value: totalValue,
+        currency: selectedVariant.price.currencyCode || 'ILS',
+        quantity: quantity,
+      });
+    }
 
     const formData = new FormData();
     formData.append('cartAction', 'ADD_TO_CART');

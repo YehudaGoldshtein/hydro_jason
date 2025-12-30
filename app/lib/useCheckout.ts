@@ -1,5 +1,6 @@
 import { useFetcher } from '@remix-run/react';
 import { useEffect } from 'react';
+import { trackInitiateCheckout } from './analytics';
 
 /**
  * Hook for handling checkout actions
@@ -12,6 +13,14 @@ export function useCheckout() {
   useEffect(() => {
     console.log('🔍 useCheckout - fetcher.data:', fetcher.data);
     if (fetcher.data?.success && fetcher.data.checkoutUrl) {
+      // Track InitiateCheckout event before redirecting
+      // Note: We track with basic info since we don't have full cart details here
+      trackInitiateCheckout({
+        content_type: 'product',
+        currency: 'ILS',
+        num_items: 1,
+      });
+
       console.log('✅ Redirecting to checkout:', fetcher.data.checkoutUrl);
       window.location.href = fetcher.data.checkoutUrl;
     } else if (fetcher.data?.error) {
