@@ -238,76 +238,38 @@ function AnalyticsProviderWrapper({ data }: { data: any }) {
 
 export default function App() {
   const data = useLoaderData<typeof loader>();
-  const location = useLocation(); // Track route changes
+  const location = useLocation();
   
-  // Helper function to track PageView for current route
-  const trackPageViewForRoute = () => {
-    if (typeof window === 'undefined' || !window.fbq) return;
-    
-    const currentPath = location.pathname;
-    if (!window.fb_pageview_tracked || window.fb_pageview_tracked !== currentPath) {
-      window.fb_pageview_tracked = currentPath;
-      window.fbq('track', 'PageView');
-      console.log('[Meta Pixel] ✅ PageView tracked for:', currentPath);
-    }
-  };
-  
-  // Meta Pixel initialization - Production-ready
-  // Initialize Pixel only once on mount
+  // Meta Pixel: Initialize once on mount
   useEffect(() => {
-    // SSR check - only run on client
     if (typeof window === 'undefined') return;
     
-    // Hardcoded Pixel ID for production
-    const PIXEL_ID = '1855054518452200';
+    // Guard: prevent duplicate initialization
+    if (window.fb_initialized) return;
     
-    // Check if already initialized
-    if (window.fb_initialized) {
-      console.log('[Meta Pixel] Already initialized, tracking PageView for current route');
-      trackPageViewForRoute();
-      return;
-    }
-    
-    // Wait for fbq to be available (script is loaded in <head>)
-    const initializePixel = () => {
+    // Wait for fbq to be available (script loads in <head>)
+    const initPixel = () => {
       if (window.fbq && !window.fb_initialized) {
         window.fb_initialized = true;
-        window.fbq('init', PIXEL_ID);
-        console.log('[Meta Pixel] ✅ Initialized with ID:', PIXEL_ID);
-        
-        // Track PageView after init is complete
-        setTimeout(() => {
-          trackPageViewForRoute();
-        }, 50);
-      } else if (!window.fbq) {
-        // Retry after 100ms if fbq not ready yet (max 10 retries = 1 second)
-        let retries = 0;
-        const maxRetries = 10;
-        const retry = () => {
-          retries++;
-          if (window.fbq && !window.fb_initialized) {
-            initializePixel();
-          } else if (retries < maxRetries) {
-            setTimeout(retry, 100);
-          } else {
-            console.error('[Meta Pixel] ❌ Failed to initialize after', maxRetries, 'retries');
-          }
-        };
-        setTimeout(retry, 100);
+        window.fbq('init', '1855054518452200');
+        console.log('[Meta Pixel] ✅ Initialized');
+      } else if (window.fbq === undefined) {
+        // Retry if script not loaded yet
+        setTimeout(initPixel, 100);
       }
     };
     
-    // Start initialization
-    initializePixel();
-  }, []); // Run only once on mount
+    initPixel();
+  }, []); // Empty deps: run only once on mount
   
-  // Track PageView on route changes
+  // Meta Pixel: Track PageView on route changes
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (!window.fb_initialized || !window.fbq) return;
+    if (!window.fbq || !window.fb_initialized) return;
     
-    // Track PageView for new route
-    trackPageViewForRoute();
+    // Track PageView for current route
+    window.fbq('track', 'PageView');
+    console.log('[Meta Pixel] ✅ PageView tracked for:', location.pathname);
   }, [location.pathname]); // Track on route change
   
   // Debug logging (client-side) - CRITICAL for debugging shopId issues
@@ -387,7 +349,21 @@ export default function App() {
         <Meta />
         <Links />
         <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
-        {/* Meta Pixel Base Code - Loaded via useEffect for production compatibility */}
+        {/* Meta Pixel Base Code - Static script tag for production reliability */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              !function(f,b,e,v,n,t,s)
+              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+              n.queue=[];t=b.createElement(e);t.async=!0;
+              t.src=v;s=b.getElementsByTagName(e)[0];
+              s.parentNode.insertBefore(t,s)}(window, document,'script',
+              'https://connect.facebook.net/en_US/fbevents.js');
+            `,
+          }}
+        />
         <noscript>
           <img
             height="1"
