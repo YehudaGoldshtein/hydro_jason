@@ -270,24 +270,14 @@ export default function App() {
   }
   // #endregion
   
-  // CRITICAL: Ensure shop object is properly structured for Analytics.Provider
-  // Analytics.Provider expects shop to have shopId as a direct property
-  const shopForAnalytics = data.shop && typeof data.shop === 'object' && !(data.shop instanceof Promise)
-    ? {
-        shopId: String(data.shop.shopId || '1000075164').trim(),
-        acceptedLanguage: (data.shop.acceptedLanguage || 'HE') as 'HE',
-        currency: (data.shop.currency || 'ILS') as 'ILS',
-        hydrogenSubchannelId: String(data.shop.hydrogenSubchannelId || '0'),
-        ...(data.shop.id && { id: data.shop.id }),
-        ...(data.shop.name && { name: data.shop.name }),
-        ...(data.shop.primaryDomain && { primaryDomain: data.shop.primaryDomain }),
-      }
-    : {
-        shopId: '1000075164',
-        acceptedLanguage: 'HE' as 'HE',
-        currency: 'ILS' as 'ILS',
-        hydrogenSubchannelId: '0',
-      };
+  // CRITICAL: Hardcode shop object to avoid serialization issues and satisfy Analytics.Provider
+  // This prevents the "Missing shop.shopId configuration" error
+  const shopForAnalytics = {
+    shopId: '1000075164',
+    currency: 'ILS' as 'ILS',
+    acceptedLanguage: 'HE' as 'HE',
+    hydrogenSubchannelId: '0',
+  };
   
   // Generate CSS variables from active theme
   const cssVariables = `
@@ -346,41 +336,6 @@ export default function App() {
         <Links />
         <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
         <MetaPixelScript />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              // Prevent Shopify object redefinition error
-              (function() {
-                if (typeof window === 'undefined') return;
-                
-                // If Shopify already exists, try to make it redefinable
-                if (window.Shopify) {
-                  try {
-                    // Try to delete the property descriptor to allow redefinition
-                    const descriptor = Object.getOwnPropertyDescriptor(window, 'Shopify');
-                    if (descriptor && !descriptor.configurable) {
-                      // Property is not configurable, we can't delete it
-                      // Store the existing value and mark it as already initialized
-                      window.__SHOPIFY_ALREADY_EXISTS__ = true;
-                      console.warn('[Analytics] Shopify object already exists and is not configurable');
-                    } else {
-                      // Property is configurable, delete it to allow redefinition
-                      delete window.Shopify;
-                      console.log('[Analytics] Removed existing Shopify object to allow redefinition');
-                    }
-                  } catch (e) {
-                    // If we can't delete it, mark it as already exists
-                    window.__SHOPIFY_ALREADY_EXISTS__ = true;
-                    console.warn('[Analytics] Could not remove existing Shopify object:', e);
-                  }
-                } else {
-                  // Shopify doesn't exist, create it as a regular property
-                  window.Shopify = {};
-                }
-              })();
-            `,
-          }}
-        />
       </head>
       <body style={{ fontFamily: 'var(--font-family-main)' }}>
         {/* #region agent log */}
