@@ -1,7 +1,7 @@
 import { json, type LoaderFunctionArgs } from '@shopify/remix-oxygen';
 import { useLoaderData } from '@remix-run/react';
 import { useAnalytics } from '@shopify/hydrogen';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { storefrontQuery } from '~/lib/shopify.server';
 import { Layout } from '~/components/Layout';
 import { HeroVideoCarousel } from '~/components/HeroVideoCarousel';
@@ -163,10 +163,6 @@ export default function Index() {
   const { product, cartCount } = useLoaderData<typeof loader>();
   const analytics = useAnalytics();
   
-  // Use ref to prevent double-firing in React Strict Mode
-  const viewContentTracked = useRef(false);
-  const currentProductId = useRef<string | null>(null);
-
   // Track page_viewed and product_viewed events when product is loaded
   useEffect(() => {
     if (!product || !analytics?.publish) return;
@@ -202,40 +198,6 @@ export default function Index() {
         });
       } catch (error) {
         console.error('Error publishing product_viewed:', error);
-      }
-    }
-
-    // Meta Pixel: Track ViewContent event (only once per product)
-    if (typeof window !== 'undefined' && window.fbq && product && selectedVariant) {
-      // Extract product ID (remove 'gid://shopify/Product/' prefix if present)
-      const productId = product.id.replace('gid://shopify/Product/', '');
-      
-      // Only track if this is a new product or hasn't been tracked yet
-      if (!viewContentTracked.current || currentProductId.current !== productId) {
-        try {
-          const productValue = parseFloat(selectedVariant.price.amount) || 1.00;
-          
-          window.fbq('track', 'ViewContent', {
-            content_ids: [productId],
-            content_type: 'product',
-            value: productValue,
-            currency: 'ILS',
-          });
-          
-          // Mark as tracked
-          viewContentTracked.current = true;
-          currentProductId.current = productId;
-          
-          console.log('[Meta Pixel] ✅ Tracked ViewContent:', {
-            productId,
-            value: productValue,
-            currency: 'ILS',
-          });
-        } catch (error) {
-          console.error('[Meta Pixel] ❌ Error tracking ViewContent:', error);
-        }
-      } else {
-        console.log('[Meta Pixel] ⏭️ ViewContent already tracked for product:', productId);
       }
     }
   }, [product, analytics?.publish]);

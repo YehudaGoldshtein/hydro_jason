@@ -193,48 +193,21 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
       }
     }
 
-    // Meta Pixel: Track InitiateCheckout event first
-    if (typeof window !== 'undefined' && window.fbq && product && selectedVariant) {
-      try {
-        // Extract product ID (remove 'gid://shopify/Product/' prefix if present)
-        const productId = product.id.replace('gid://shopify/Product/', '');
-        const productValue = parseFloat(selectedVariant.price.amount) * quantity || 1.00;
-        
-        window.fbq('track', 'InitiateCheckout', {
-          content_ids: [productId],
-          content_type: 'product',
-          value: productValue,
-          currency: 'ILS',
-        });
-        console.log('[Meta Pixel] ✅ Tracked InitiateCheckout:', {
-          productId,
-          value: productValue,
-          currency: 'ILS',
-          quantity,
-        });
-      } catch (error) {
-        console.error('[Meta Pixel] ❌ Error tracking InitiateCheckout:', error);
-      }
-    }
+    const formData = new FormData();
+    formData.append('cartAction', 'ADD_TO_CART');
+    formData.append('merchandiseId', merchandiseId);
+    formData.append('quantity', quantity.toString());
 
-    // Wait 200ms to ensure Pixel has time to send the data before redirect
-    setTimeout(() => {
-      const formData = new FormData();
-      formData.append('cartAction', 'ADD_TO_CART');
-      formData.append('merchandiseId', merchandiseId);
-      formData.append('quantity', quantity.toString());
+    console.log('📤 Submitting to cart with:', {
+      cartAction: 'ADD_TO_CART',
+      merchandiseId,
+      quantity
+    });
 
-      console.log('📤 Submitting to cart with:', {
-        cartAction: 'ADD_TO_CART',
-        merchandiseId,
-        quantity
-      });
-
-      fetcher.submit(formData, {
-        method: 'post',
-        action: '/cart'
-      });
-    }, 200);
+    fetcher.submit(formData, {
+      method: 'post',
+      action: '/cart'
+    });
   };
 
   return (
