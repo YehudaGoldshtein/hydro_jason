@@ -121,16 +121,13 @@ export function Footer() {
 
       <a
         href={`https://wa.me/${whatsappButton.whatsappNumber}`}
-        className="fixed z-[999] bottom-28 md:bottom-24 right-4 w-14 h-14 md:w-16 md:h-16 rounded-full bg-ui-whatsapp text-white flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
+        className="fixed z-[999] bottom-24 right-4 w-12 h-12 rounded-full bg-ui-whatsapp text-white shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center"
         target="_blank"
         rel="noreferrer"
         aria-label={whatsappButton.ariaLabel}
-        style={{
-          animation: 'whatsappFloat 3s ease-in-out infinite, whatsappPulse 2s ease-in-out infinite',
-        }}
       >
         <svg
-          className="w-7 h-7 md:w-8 md:h-8 relative z-10"
+          className="w-6 h-6"
           fill="currentColor"
           viewBox="0 0 24 24"
           xmlns="http://www.w3.org/2000/svg"
