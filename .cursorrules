@@ -323,3 +323,45 @@ landingMedia (מייצא לכל הקומפוננטות)
 
 - **Page Builder Logic:** When creating components for our custom Page Builder, ensure they are compatible with the Shopify Storefront API 2025-07 or later.
 
+# Git Best Practices (CRITICAL)
+
+## Before ANY Git Commit
+1. **ALWAYS check `git status`** to see what files have changed
+2. **ALWAYS check `git diff`** to review the exact changes before committing
+3. **NEVER use `git add .`** without first reviewing what will be added
+4. **ALWAYS add specific files** using `git add <file1> <file2>` instead of `git add .`
+5. **ASK the user for confirmation** if there are many changed files or if changes seem unrelated to the current task
+
+## Commit Rules
+- Only commit files that are **directly related** to the current task
+- If you see unrelated changes in `git status`, **ask the user** before including them
+- **Never commit** changes that the user didn't explicitly request
+- If you're fixing a dependency issue, only commit: `package.json`, `package-lock.json`, and related config files (like `.npmrc`)
+
+## Example Safe Workflow
+```bash
+# 1. Check what changed
+git status
+
+# 2. Review the changes
+git diff
+
+# 3. Add ONLY relevant files
+git add package.json .npmrc package-lock.json
+
+# 4. Verify what will be committed
+git status
+
+# 5. Commit with clear message
+git commit -m "Fix: specific issue description"
+```
+
+## What to Do If You See Unrelated Changes
+1. **Stop** - don't proceed with commit
+2. **Show the user** what files have changed using `git status`
+3. **Ask the user** if they want to include all changes or only specific files
+4. **Wait for confirmation** before committing
+
+## Critical Rule
+**NEVER commit changes that could overwrite or delete user's work without explicit confirmation.**
+

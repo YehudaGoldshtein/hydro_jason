@@ -21,8 +21,8 @@ export const content = {
     productName: 'Feed-Ease',
     // סימן המטבע
     currency: '₪',
-    // מספר פריטים בעגלה (לדוגמה בלבד)
-    cartCount: 3,
+    // מספר פריטים בעגלה (0 = עגלה ריקה, לא מציגה badge)
+    cartCount: 0,
   },
 
   // ==================== ANNOUNCEMENT BAR ====================

@@ -166,15 +166,18 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
       return;
     }
 
+    // Quantity is based on selected option: index 0 = 1 kit, index 1 = 2 kits, index 2 = 3 kits
+    const quantity = selectedIdx + 1;
+
     const formData = new FormData();
     formData.append('cartAction', 'ADD_TO_CART');
     formData.append('merchandiseId', merchandiseId);
-    formData.append('quantity', '1');
+    formData.append('quantity', quantity.toString());
 
     console.log('📤 Submitting to cart with:', {
       cartAction: 'ADD_TO_CART',
       merchandiseId,
-      quantity: 1
+      quantity
     });
 
     fetcher.submit(formData, {

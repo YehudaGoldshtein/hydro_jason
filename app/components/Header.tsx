@@ -4,12 +4,19 @@ import { Link } from '@remix-run/react';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
 
-export function Header() {
+interface HeaderProps {
+  cartCount?: number;
+}
+
+export function Header({ cartCount }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigationLinks = activeContent.header.navigation;
   const { global } = activeContent;
   const { header: headerMedia } = landingMedia;
+  
+  // Use actual cart count from loader, fallback to config (which is now 0)
+  const displayCartCount = cartCount ?? global.cartCount ?? 0;
 
   return (
     <header className="bg-white shadow-sm" dir="rtl">
@@ -19,9 +26,9 @@ export function Header() {
           <div className="flex items-center flex-shrink-0">
             <Link to="/cart" className="relative p-2 hover:bg-gray-50 rounded-lg transition-colors">
               <ShoppingCart className="h-6 w-6 text-text-primary" strokeWidth={2} />
-              {(global.cartCount ?? 0) > 0 && (
+              {displayCartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-primary-main text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  {global.cartCount}
+                  {displayCartCount}
                 </span>
               )}
             </Link>
