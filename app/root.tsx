@@ -204,6 +204,18 @@ function AnalyticsProviderWrapper({ data }: { data: any }) {
     }
   }, [validatedShop]);
   
+  // Additional validation - ensure shopId is set before rendering
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (!validatedShop.shopId || validatedShop.shopId.trim() === '') {
+        console.error('[Analytics] ❌ CRITICAL: shopId is empty in AnalyticsProviderWrapper!');
+        console.error('[Analytics] This will cause PerfKit "shopId is missing" error');
+      } else {
+        console.log('[Analytics] ✅ shopId is valid before Analytics.Provider render:', validatedShop.shopId);
+      }
+    }
+  }, [validatedShop.shopId]);
+  
   return (
     <Analytics.Provider
       cart={data.cart}
@@ -304,7 +316,7 @@ export default function App() {
         <Meta />
         <Links />
         <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
-        {/* Meta Pixel - Simple and reliable approach */}
+        {/* Meta Pixel - Wait for script to load before initializing */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -313,11 +325,24 @@ export default function App() {
               n.callMethod.apply(n,arguments):n.queue.push(arguments)};
               if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
               n.queue=[];t=b.createElement(e);t.async=!0;
-              t.src=v;s=b.getElementsByTagName(e)[0];
+              t.src=v;
+              t.onload=function(){
+                if(window.fbq){
+                  try{
+                    window.fbq('init', '1855054518452200');
+                    window.fbq('track', 'PageView');
+                    console.log('[Meta Pixel] ✅ Initialized and tracked PageView');
+                  }catch(e){
+                    console.error('[Meta Pixel] ❌ Error initializing:', e);
+                  }
+                }
+              };
+              t.onerror=function(){
+                console.error('[Meta Pixel] ❌ Failed to load script');
+              };
+              s=b.getElementsByTagName(e)[0];
               s.parentNode.insertBefore(t,s)}(window, document,'script',
               'https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init', '1855054518452200');
-              fbq('track', 'PageView');
             `,
           }}
         />
