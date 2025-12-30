@@ -8,7 +8,7 @@ import { useAnalytics } from '@shopify/hydrogen';
  */
 export function useCheckout() {
   const fetcher = useFetcher<{ success: boolean; checkoutUrl?: string; error?: string }>();
-  const { publish } = useAnalytics();
+  const analytics = useAnalytics();
 
   // Handle redirect when checkout URL is received
   useEffect(() => {
@@ -16,11 +16,17 @@ export function useCheckout() {
     if (fetcher.data?.success && fetcher.data.checkoutUrl) {
       // Track checkout_started event using Shopify Analytics
       // Note: We track with basic info since we don't have full cart details here
-      publish('checkout_started', {
-        url: fetcher.data.checkoutUrl,
-        cart: null, // Cart data not available here
-        prevCart: null,
-      });
+      if (analytics?.publish) {
+        try {
+          analytics.publish('checkout_started', {
+            url: fetcher.data.checkoutUrl,
+            cart: null, // Cart data not available here
+            prevCart: null,
+          });
+        } catch (error) {
+          console.error('Error publishing checkout_started:', error);
+        }
+      }
 
       console.log('✅ Redirecting to checkout:', fetcher.data.checkoutUrl);
       window.location.href = fetcher.data.checkoutUrl;

@@ -9,7 +9,7 @@ export function StickyBuyBar() {
   const [visible, setVisible] = useState(true);
   const { goToCheckout, isSubmitting } = useCheckout();
   const { product } = useLoaderData<typeof import('~/routes/_index').loader>();
-  const { publish } = useAnalytics();
+  const analytics = useAnalytics();
   const { productName, stockWarning, ctaButton, fallbackImageAlt } = activeContent.stickyBuyBar;
   const { stickyBuyBar: barMedia } = landingMedia;
 
@@ -37,21 +37,25 @@ export function StickyBuyBar() {
     
     if (defaultVariant?.id) {
       // Track product_added_to_cart event using Shopify Analytics (default quantity is 1)
-      if (product) {
-        publish('product_added_to_cart', {
-          url: window.location.href,
-          products: [
-            {
-              id: product.id,
-              title: product.title,
-              price: defaultVariant.price.amount,
-              variantId: defaultVariant.id,
-              variantTitle: defaultVariant.title,
-              quantity: 1,
-              vendor: product.vendor || '',
-            },
-          ],
-        });
+      if (product && analytics?.publish) {
+        try {
+          analytics.publish('product_added_to_cart', {
+            url: typeof window !== 'undefined' ? window.location.href : '',
+            products: [
+              {
+                id: product.id,
+                title: product.title,
+                price: defaultVariant.price.amount,
+                variantId: defaultVariant.id,
+                variantTitle: defaultVariant.title,
+                quantity: 1,
+                vendor: product.vendor || '',
+              },
+            ],
+          });
+        } catch (error) {
+          console.error('Error publishing product_added_to_cart:', error);
+        }
       }
 
       console.log('🚀 Calling goToCheckout with variant 0 (₪199):', defaultVariant.id);

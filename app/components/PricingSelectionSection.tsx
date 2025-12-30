@@ -47,7 +47,7 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
   // Use Context to share selection across all components
   const { selectedVariantIndex: selectedIdx, setSelectedVariantIndex: setSelectedIdx } = useSelectedVariant();
   const fetcher = useFetcher<{ success: boolean; checkoutUrl?: string; error?: string }>();
-  const { publish } = useAnalytics();
+  const analytics = useAnalytics();
   const { pricing: pricingMedia } = landingMedia;
 
   // Log product data for debugging
@@ -172,21 +172,25 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
     const quantity = selectedIdx + 1;
 
     // Track product_added_to_cart event using Shopify Analytics
-    if (product && selectedVariant) {
-      publish('product_added_to_cart', {
-        url: window.location.href,
-        products: [
-          {
-            id: product.id,
-            title: product.title,
-            price: selectedVariant.price.amount,
-            variantId: selectedVariant.id,
-            variantTitle: selectedVariant.title,
-            quantity: quantity,
-            vendor: product.vendor || '',
-          },
-        ],
-      });
+    if (product && selectedVariant && analytics?.publish) {
+      try {
+        analytics.publish('product_added_to_cart', {
+          url: typeof window !== 'undefined' ? window.location.href : '',
+          products: [
+            {
+              id: product.id,
+              title: product.title,
+              price: selectedVariant.price.amount,
+              variantId: selectedVariant.id,
+              variantTitle: selectedVariant.title,
+              quantity: quantity,
+              vendor: product.vendor || '',
+            },
+          ],
+        });
+      } catch (error) {
+        console.error('Error publishing product_added_to_cart:', error);
+      }
     }
 
     const formData = new FormData();

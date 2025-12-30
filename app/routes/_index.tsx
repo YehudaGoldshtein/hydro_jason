@@ -1,7 +1,7 @@
 import { json, type LoaderFunctionArgs } from '@shopify/remix-oxygen';
 import { useLoaderData } from '@remix-run/react';
-import { useEffect } from 'react';
 import { useAnalytics } from '@shopify/hydrogen';
+import { useEffect } from 'react';
 import { storefrontQuery } from '~/lib/shopify.server';
 import { Layout } from '~/components/Layout';
 import { HeroVideoCarousel } from '~/components/HeroVideoCarousel';
@@ -161,25 +161,29 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
 export default function Index() {
   const { product, cartCount } = useLoaderData<typeof loader>();
-  const { publish } = useAnalytics();
+  const analytics = useAnalytics();
 
   // Track page_viewed and product_viewed events when product is loaded
   useEffect(() => {
-    if (product) {
-      const selectedVariant = product.variants?.nodes?.[0];
-      const price = selectedVariant?.price?.amount
-        ? parseFloat(selectedVariant.price.amount)
-        : undefined;
-
-      // Publish page_viewed event
-      publish('page_viewed', {
-        url: window.location.href,
+    if (!product || !analytics?.publish) return;
+    
+    const selectedVariant = product.variants?.nodes?.[0];
+    
+    // Publish page_viewed event
+    try {
+      analytics.publish('page_viewed', {
+        url: typeof window !== 'undefined' ? window.location.href : '',
+        path: typeof window !== 'undefined' ? window.location.pathname : '',
       });
+    } catch (error) {
+      console.error('Error publishing page_viewed:', error);
+    }
 
-      // Publish product_viewed event
-      if (selectedVariant) {
-        publish('product_viewed', {
-          url: window.location.href,
+    // Publish product_viewed event
+    if (selectedVariant) {
+      try {
+        analytics.publish('product_viewed', {
+          url: typeof window !== 'undefined' ? window.location.href : '',
           products: [
             {
               id: product.id,
@@ -192,9 +196,11 @@ export default function Index() {
             },
           ],
         });
+      } catch (error) {
+        console.error('Error publishing product_viewed:', error);
       }
     }
-  }, [product, publish]);
+  }, [product, analytics?.publish]);
 
   return (
     <SelectedVariantProvider>
