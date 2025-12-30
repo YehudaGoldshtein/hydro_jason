@@ -25,7 +25,10 @@ export function initMetaPixel() {
   if (typeof window === 'undefined') return;
 
   // Check if already initialized
-  if (window.fbq) return;
+  if (window.fbq && window.fbq.loaded) {
+    console.log('[Meta Pixel] Already initialized');
+    return;
+  }
 
   // Create fbq function
   (function (f: any, b: any, e: any, v: any, n?: any, t?: any, s?: any) {
@@ -43,6 +46,22 @@ export function initMetaPixel() {
     t = b.createElement(e);
     t.async = !0;
     t.src = v;
+    t.onload = function() {
+      console.log('[Meta Pixel] Script loaded successfully');
+      // Initialize pixel after script loads
+      if (window.fbq) {
+        try {
+          window.fbq('init', PIXEL_ID);
+          window.fbq('track', 'PageView');
+          console.log('[Meta Pixel] Initialized with ID:', PIXEL_ID);
+        } catch (error) {
+          console.error('[Meta Pixel] Error initializing:', error);
+        }
+      }
+    };
+    t.onerror = function() {
+      console.error('[Meta Pixel] Failed to load script');
+    };
     s = b.getElementsByTagName(e)[0];
     s.parentNode?.insertBefore(t, s);
   })(
@@ -52,9 +71,18 @@ export function initMetaPixel() {
     'https://connect.facebook.net/en_US/fbevents.js'
   );
 
-  // Initialize pixel
-  window.fbq('init', PIXEL_ID);
-  window.fbq('track', 'PageView');
+  // Fallback: Try to initialize after a short delay if onload didn't fire
+  setTimeout(() => {
+    if (window.fbq && !window.fbq.loaded) {
+      try {
+        window.fbq('init', PIXEL_ID);
+        window.fbq('track', 'PageView');
+        console.log('[Meta Pixel] Initialized via fallback timeout');
+      } catch (error) {
+        console.error('[Meta Pixel] Fallback initialization error:', error);
+      }
+    }
+  }, 1000);
 }
 
 /**

@@ -177,7 +177,15 @@ export default function App() {
   
   // Initialize Meta Pixel once on client-side mount
   useEffect(() => {
-    initMetaPixel();
+    if (typeof window !== 'undefined') {
+      console.log('[Meta Pixel] Initializing Meta Pixel...');
+      try {
+        initMetaPixel();
+        console.log('[Meta Pixel] initMetaPixel called successfully');
+      } catch (error) {
+        console.error('[Meta Pixel] Error calling initMetaPixel:', error);
+      }
+    }
   }, []);
   
   // Debug logging (client-side) - CRITICAL for debugging shopId issues
