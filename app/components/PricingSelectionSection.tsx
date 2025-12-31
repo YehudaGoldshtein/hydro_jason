@@ -50,6 +50,7 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
   const { pricing: pricingMedia } = landingMedia;
   const { trackAddToCart, trackBeginCheckout } = useEcommerceTracking();
   const redirectFired = useRef(false);
+  const buttonClickedRef = useRef(false);
 
   // Log product data for debugging
   console.log('🛒 COMPONENT: Product prop:', product);
@@ -141,34 +142,110 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
   console.log('🎯 Merchandise ID for form:', merchandiseId);
 
   // Handle redirect when checkout URL is received
+  // Only fire when fetcher.data changes from undefined to a real value
+  const previousFetcherData = useRef<typeof fetcher.data>(undefined);
+
   useEffect(() => {
-    if (fetcher.data?.success && fetcher.data.checkoutUrl && !redirectFired.current) {
+    // Safety guard: only run on client-side
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    // Safety check: fetcher.data must exist
+    if (!fetcher.data) {
+      return;
+    }
+
+    // Deep check: verify fetcher.data exists and has required structure
+    if (!fetcher.data) {
+      console.log('[Tracking] fetcher.data not ready yet, waiting...');
+      return;
+    }
+
+    // Deep check: verify fetcher.data has the required properties (success and checkoutUrl)
+    if (!fetcher.data.success || !fetcher.data.checkoutUrl) {
+      // If error exists, log it but don't track
+      if (fetcher.data.error) {
+        console.error('[Tracking] Checkout error:', fetcher.data.error);
+      }
+      return;
+    }
+
+    // Deep check: verify checkoutUrl is a valid string
+    if (typeof fetcher.data.checkoutUrl !== 'string' || fetcher.data.checkoutUrl.trim() === '') {
+      console.warn('[Tracking] Invalid checkoutUrl', { checkoutUrl: fetcher.data.checkoutUrl });
+      return;
+    }
+
+    // Only fire when fetcher.data changes from undefined to a real value
+    const currentData = fetcher.data;
+    const previousData = previousFetcherData.current;
+
+    // If data hasn't changed, don't fire again
+    if (previousData === currentData) {
+      return;
+    }
+
+    // Update the ref to track the current data
+    previousFetcherData.current = currentData;
+
+    // Safety check: product and selectedVariant must exist
+    if (!product || !selectedVariant) {
+      console.warn('[Tracking] Missing product or variant', { 
+        hasProduct: !!product, 
+        hasVariant: !!selectedVariant 
+      });
+      return;
+    }
+
+    // Additional validation: ensure IDs exist and are valid
+    if (!product.id || typeof product.id !== 'string' || product.id.trim() === '') {
+      console.warn('[Tracking] Missing or empty product.id', { productId: product.id });
+      return;
+    }
+
+    if (!selectedVariant.id || typeof selectedVariant.id !== 'string' || selectedVariant.id.trim() === '') {
+      console.warn('[Tracking] Missing or empty variant.id', { variantId: selectedVariant.id });
+      return;
+    }
+
+    // All deep checks passed - proceed with tracking
+    if (!redirectFired.current) {
       redirectFired.current = true;
       const checkoutUrl = fetcher.data.checkoutUrl;
+      const quantity = selectedIdx + 1;
       
-      console.log('✅ Preparing to redirect to checkout:', checkoutUrl);
+      console.log('[Tracking] Data is ready, firing begin_checkout event now', {
+        productId: product.id,
+        variantId: selectedVariant.id,
+        checkoutUrl,
+        quantity,
+      });
       
-      // Track begin_checkout event immediately
-      if (product && selectedVariant) {
-        const quantity = selectedIdx + 1;
-        trackBeginCheckout({
-          product,
-          variant: selectedVariant,
-          quantity,
-        });
-      }
+      // Track begin_checkout event (with comprehensive safety guards inside trackBeginCheckout)
+      trackBeginCheckout({
+        product,
+        variant: selectedVariant,
+        quantity,
+      });
       
       // Wait 300ms to allow Meta Pixel/GTM to send data before redirect
       setTimeout(() => {
-        console.log('🚀 Redirecting to checkout after 300ms delay');
-        window.location.href = checkoutUrl;
+        console.log('[Tracking] ✅ Redirecting to checkout after 300ms delay');
+        if (typeof window !== 'undefined' && checkoutUrl) {
+          window.location.href = checkoutUrl;
+        }
       }, 300);
-    } else if (fetcher.data?.error) {
-      console.error('❌ Checkout error:', fetcher.data.error);
     }
   }, [fetcher.data, product, selectedVariant, selectedIdx, trackBeginCheckout]);
 
   const handleAddToCart = () => {
+    // Prevent duplicate clicks
+    if (buttonClickedRef.current) {
+      console.log('⚠️ Button click already in progress, ignoring duplicate click');
+      return;
+    }
+
     console.log('🚀 ADD TO CART CLICKED IN PRICING SECTION!');
     console.log('🎯 Selected Index:', selectedIdx);
     console.log('🚀 Merchandise ID:', merchandiseId);
@@ -187,17 +264,26 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
       return;
     }
 
+    // Safety check: product and selectedVariant must exist
+    if (!product || !selectedVariant) {
+      console.warn('⚠️ handleAddToCart: Missing product or variant', { 
+        hasProduct: !!product, 
+        hasVariant: !!selectedVariant 
+      });
+      return;
+    }
+
+    buttonClickedRef.current = true;
+
     // Quantity is based on selected option: index 0 = 1 kit, index 1 = 2 kits, index 2 = 3 kits
     const quantity = selectedIdx + 1;
 
-    // Track add_to_cart event - only once per click
-    if (product && selectedVariant) {
-      trackAddToCart({
-        product,
-        variant: selectedVariant,
-        quantity,
-      });
-    }
+    // Track add_to_cart event (with comprehensive safety guards inside trackAddToCart)
+    trackAddToCart({
+      product,
+      variant: selectedVariant,
+      quantity,
+    });
 
     const formData = new FormData();
     formData.append('cartAction', 'ADD_TO_CART');

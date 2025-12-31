@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useCheckout } from '~/lib/useCheckout';
 import { useLoaderData } from '@remix-run/react';
 import { activeContent } from '~/configs/content-active';
@@ -17,6 +17,7 @@ export function StickyBuyBar() {
   const { productName, stockWarning, ctaButton, fallbackImageAlt } = activeContent.stickyBuyBar;
   const { stickyBuyBar: barMedia } = landingMedia;
   const { trackAddToCart } = useEcommerceTracking();
+  const buttonClickedRef = useRef(false);
 
   useEffect(() => {
     const onScroll = () => {
@@ -32,6 +33,12 @@ export function StickyBuyBar() {
   }, []);
 
   const handleClick = () => {
+    // Prevent duplicate clicks
+    if (buttonClickedRef.current) {
+      console.log('⚠️ Button click already in progress, ignoring duplicate click');
+      return;
+    }
+
     console.log('🔘 StickyBuyBar clicked!');
     console.log('📦 Product:', product);
     console.log('🎯 All Variants:', product?.variants?.nodes);
@@ -41,6 +48,8 @@ export function StickyBuyBar() {
     console.log('✅ Using default variant (₪199):', defaultVariant);
     
     if (defaultVariant?.id && product) {
+      buttonClickedRef.current = true;
+      
       // Track add_to_cart event
       trackAddToCart({
         product,
