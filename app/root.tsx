@@ -209,6 +209,27 @@ export default function App() {
         <Meta />
         <Links />
         <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
+        {/* Error handler - Must load BEFORE GTM to intercept errors */}
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: errorHandlerScript,
+          }}
+        />
+        {/* Google Tag Manager - Must be in <head> for GTM Helper to detect it */}
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: gtmScript,
+          }}
+        />
+        {/* Meta Pixel */}
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: metaPixelScript,
+          }}
+        />
       </head>
       <body style={{ fontFamily: 'var(--font-family-main)' }}>
         {/* Google Tag Manager (noscript) */}
@@ -220,29 +241,6 @@ export default function App() {
             style={{ display: 'none', visibility: 'hidden' }}
           />
         </noscript>
-        
-        {/* Error handler - Must load BEFORE GTM to intercept errors */}
-        <script
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: errorHandlerScript,
-          }}
-        />
-        {/* Google Tag Manager - Using suppressHydrationWarning to prevent hydration errors */}
-        <script
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: gtmScript,
-          }}
-        />
-        {/* Meta Pixel - Using suppressHydrationWarning to prevent hydration errors */}
-        <script
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: metaPixelScript,
-          }}
-        />
-        
         <Outlet />
         <ScrollRestoration />
         <Scripts />
