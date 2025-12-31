@@ -11,7 +11,7 @@ export default {
     try {
       const handleRequest = createRequestHandler({
         build: remixBuild,
-        mode: process.env.NODE_ENV,
+        mode: (env.NODE_ENV as 'development' | 'production' | 'test') || 'development',
         getLoadContext: () => ({
           env,
           waitUntil: executionContext.waitUntil.bind(executionContext),

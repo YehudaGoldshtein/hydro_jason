@@ -3,13 +3,20 @@ import { useCheckout } from '~/lib/useCheckout';
 import { useLoaderData } from '@remix-run/react';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
+import { useEcommerceTracking } from '~/utils/gtm-tracking';
 
 export function StickyBuyBar() {
   const [visible, setVisible] = useState(true);
-  const { goToCheckout, isSubmitting } = useCheckout();
   const { product } = useLoaderData<typeof import('~/routes/_index').loader>();
+  const defaultVariant = product?.variants?.nodes?.[0] || null;
+  const { goToCheckout, isSubmitting } = useCheckout({
+    product: product || undefined,
+    variant: defaultVariant || undefined,
+    quantity: 1,
+  });
   const { productName, stockWarning, ctaButton, fallbackImageAlt } = activeContent.stickyBuyBar;
   const { stickyBuyBar: barMedia } = landingMedia;
+  const { trackAddToCart } = useEcommerceTracking();
 
   useEffect(() => {
     const onScroll = () => {
@@ -33,7 +40,14 @@ export function StickyBuyBar() {
     const defaultVariant = product?.variants?.nodes?.[0];
     console.log('✅ Using default variant (₪199):', defaultVariant);
     
-    if (defaultVariant?.id) {
+    if (defaultVariant?.id && product) {
+      // Track add_to_cart event
+      trackAddToCart({
+        product,
+        variant: defaultVariant,
+        quantity: 1,
+      });
+      
       console.log('🚀 Calling goToCheckout with variant 0 (₪199):', defaultVariant.id);
       goToCheckout(defaultVariant.id, 1);
     } else {

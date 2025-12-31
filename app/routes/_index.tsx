@@ -1,6 +1,8 @@
 import { json, type LoaderFunctionArgs } from '@shopify/remix-oxygen';
 import { useLoaderData } from '@remix-run/react';
+import { useEffect, useRef } from 'react';
 import { storefrontQuery } from '~/lib/shopify.server';
+import { pushToDataLayer } from '~/utils/gtm.client';
 import { Layout } from '~/components/Layout';
 import { HeroVideoCarousel } from '~/components/HeroVideoCarousel';
 import { ProductHeroSection } from '~/components/ProductHeroSection';
@@ -159,6 +161,33 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
 export default function Index() {
   const { product, cartCount } = useLoaderData<typeof loader>();
+  const hasFired = useRef(false);
+
+  // Track product view event (view_item) - only once per page mount
+  useEffect(() => {
+    if (product && !hasFired.current) {
+      const defaultVariant = product.variants?.nodes?.[0];
+      if (defaultVariant) {
+        pushToDataLayer({
+          event: 'view_item',
+          ecommerce: {
+            currency: defaultVariant.price.currencyCode || 'ILS',
+            value: parseFloat(defaultVariant.price.amount) || 0,
+            items: [
+              {
+                item_id: product.id,
+                item_name: product.title,
+                price: parseFloat(defaultVariant.price.amount) || 0,
+                currency: defaultVariant.price.currencyCode || 'ILS',
+                quantity: 1,
+              },
+            ],
+          },
+        });
+        hasFired.current = true;
+      }
+    }
+  }, [product]);
 
   return (
     <SelectedVariantProvider>

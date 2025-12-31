@@ -38,13 +38,10 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export async function loader() {
-  // Return empty data - no analytics or cart needed in root
-  return {};
-}
-
-
 export default function App() {
+  // GTM script as constant (same for SSR and client)
+  const gtmScript = "(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-W9GPB4BZ');";
+  
   // Generate CSS variables from active theme
   const cssVariables = `
     :root {
@@ -101,8 +98,25 @@ export default function App() {
         <Meta />
         <Links />
         <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
+        {/* Google Tag Manager */}
+        <script
+          data-gtm="true"
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: gtmScript,
+          }}
+        />
       </head>
       <body style={{ fontFamily: 'var(--font-family-main)' }}>
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-W9GPB4BZ"
+            height="0"
+            width="0"
+            style={{ display: 'none', visibility: 'hidden' }}
+          />
+        </noscript>
         <Outlet />
         <ScrollRestoration />
         <Scripts />

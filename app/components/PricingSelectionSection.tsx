@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Check, Circle, Sparkles, Star, CheckCircle2, ThumbsUp, Truck } from 'lucide-react';
 import { useFetcher } from '@remix-run/react';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
 import { useSelectedVariant } from '~/lib/SelectedVariantContext';
+import { useEcommerceTracking } from '~/utils/gtm-tracking';
 
 interface PricingOption {
   id: string;
@@ -47,6 +48,8 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
   const { selectedVariantIndex: selectedIdx, setSelectedVariantIndex: setSelectedIdx } = useSelectedVariant();
   const fetcher = useFetcher<{ success: boolean; checkoutUrl?: string; error?: string }>();
   const { pricing: pricingMedia } = landingMedia;
+  const { trackAddToCart, trackBeginCheckout } = useEcommerceTracking();
+  const redirectFired = useRef(false);
 
   // Log product data for debugging
   console.log('🛒 COMPONENT: Product prop:', product);
@@ -139,13 +142,31 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
 
   // Handle redirect when checkout URL is received
   useEffect(() => {
-    if (fetcher.data?.success && fetcher.data.checkoutUrl) {
-      console.log('✅ Redirecting to checkout:', fetcher.data.checkoutUrl);
-      window.location.href = fetcher.data.checkoutUrl;
+    if (fetcher.data?.success && fetcher.data.checkoutUrl && !redirectFired.current) {
+      redirectFired.current = true;
+      const checkoutUrl = fetcher.data.checkoutUrl;
+      
+      console.log('✅ Preparing to redirect to checkout:', checkoutUrl);
+      
+      // Track begin_checkout event immediately
+      if (product && selectedVariant) {
+        const quantity = selectedIdx + 1;
+        trackBeginCheckout({
+          product,
+          variant: selectedVariant,
+          quantity,
+        });
+      }
+      
+      // Wait 300ms to allow Meta Pixel/GTM to send data before redirect
+      setTimeout(() => {
+        console.log('🚀 Redirecting to checkout after 300ms delay');
+        window.location.href = checkoutUrl;
+      }, 300);
     } else if (fetcher.data?.error) {
       console.error('❌ Checkout error:', fetcher.data.error);
     }
-  }, [fetcher.data]);
+  }, [fetcher.data, product, selectedVariant, selectedIdx, trackBeginCheckout]);
 
   const handleAddToCart = () => {
     console.log('🚀 ADD TO CART CLICKED IN PRICING SECTION!');
@@ -168,6 +189,15 @@ export function PricingSelectionSection({ product }: PricingSelectionSectionProp
 
     // Quantity is based on selected option: index 0 = 1 kit, index 1 = 2 kits, index 2 = 3 kits
     const quantity = selectedIdx + 1;
+
+    // Track add_to_cart event - only once per click
+    if (product && selectedVariant) {
+      trackAddToCart({
+        product,
+        variant: selectedVariant,
+        quantity,
+      });
+    }
 
     const formData = new FormData();
     formData.append('cartAction', 'ADD_TO_CART');

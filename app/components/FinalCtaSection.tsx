@@ -4,20 +4,32 @@ import { useLoaderData } from '@remix-run/react';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
 import { useSelectedVariant } from '~/lib/SelectedVariantContext';
+import { useEcommerceTracking } from '~/utils/gtm-tracking';
 
 export function FinalCtaSection() {
   const stars = Array.from({ length: 5 });
-  const { goToCheckout, isSubmitting } = useCheckout();
   const { product } = useLoaderData<typeof import('~/routes/_index').loader>();
   const { selectedVariantIndex } = useSelectedVariant();
+  const selectedVariant = product?.variants?.nodes?.[selectedVariantIndex];
+  const { goToCheckout, isSubmitting } = useCheckout({
+    product: product || undefined,
+    variant: selectedVariant || undefined,
+    quantity: 1,
+  });
+  const { trackAddToCart } = useEcommerceTracking();
   const { heading: ctaHeading, ctaButton, paymentMethodsAlt, paymentIconsPlaceholder, guaranteeText } = activeContent.finalCta;
   const { heading: bonusHeading, includedBadge, products: bonusProducts } = activeContent.bonusProducts;
   const { finalCta: ctaMedia, bonusProducts: bonusMedia } = landingMedia;
 
   const handleCheckout = () => {
     // Use the selected variant from context (default is 0 = ₪199)
-    const selectedVariant = product?.variants?.nodes?.[selectedVariantIndex];
-    if (selectedVariant?.id) {
+    if (selectedVariant?.id && product) {
+      // Track add_to_cart event
+      trackAddToCart({
+        product,
+        variant: selectedVariant,
+        quantity: 1,
+      });
       goToCheckout(selectedVariant.id, 1);
     }
   };
