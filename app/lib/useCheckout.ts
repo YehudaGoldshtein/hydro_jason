@@ -1,6 +1,5 @@
 import { useFetcher } from '@remix-run/react';
 import { useEffect, useRef } from 'react';
-import { useEcommerceTracking } from '~/utils/gtm-tracking';
 
 interface Product {
   id: string;
@@ -28,7 +27,6 @@ interface UseCheckoutOptions {
  */
 export function useCheckout(options?: UseCheckoutOptions) {
   const fetcher = useFetcher<{ success: boolean; checkoutUrl?: string; error?: string }>();
-  const { trackBeginCheckout } = useEcommerceTracking();
   const redirectFired = useRef(false);
   const previousFetcherData = useRef<typeof fetcher.data>(undefined);
 
@@ -100,29 +98,14 @@ export function useCheckout(options?: UseCheckoutOptions) {
       redirectFired.current = true;
       const checkoutUrl = fetcher.data.checkoutUrl;
       
-      console.log('[Tracking] Data is ready, firing begin_checkout event now', {
-        productId: options.product.id,
-        variantId: options.variant.id,
-        checkoutUrl,
-        quantity: options.quantity || 1,
-      });
-      
-      // Track begin_checkout event (with comprehensive safety guards inside trackBeginCheckout)
-      trackBeginCheckout({
-        product: options.product,
-        variant: options.variant,
-        quantity: options.quantity || 1,
-      });
-      
-      // Wait 300ms to allow Meta Pixel/GTM to send data before redirect
+      // Redirect to checkout
       setTimeout(() => {
-        console.log('[Tracking] ✅ Redirecting to checkout after 300ms delay');
         if (typeof window !== 'undefined' && checkoutUrl) {
           window.location.href = checkoutUrl;
         }
       }, 300);
     }
-  }, [fetcher.data, options, trackBeginCheckout]);
+  }, [fetcher.data, options]);
 
   const goToCheckout = (merchandiseId: string, quantity: number = 1) => {
     console.log('🚀 goToCheckout called with:', { merchandiseId, quantity });

@@ -1,8 +1,6 @@
 import { json, type LoaderFunctionArgs } from '@shopify/remix-oxygen';
 import { useLoaderData } from '@remix-run/react';
-import { useEffect, useRef } from 'react';
 import { storefrontQuery } from '~/lib/shopify.server';
-import { pushToDataLayer } from '~/utils/gtm.client';
 import { Layout } from '~/components/Layout';
 import { HeroVideoCarousel } from '~/components/HeroVideoCarousel';
 import { ProductHeroSection } from '~/components/ProductHeroSection';
@@ -161,33 +159,14 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
 export default function Index() {
   const { product, cartCount } = useLoaderData<typeof loader>();
-  const hasFired = useRef(false);
 
-  // Track product view event (view_item) - only once per page mount
-  useEffect(() => {
-    if (product && !hasFired.current) {
-      const defaultVariant = product.variants?.nodes?.[0];
-      if (defaultVariant) {
-        pushToDataLayer({
-          event: 'view_item',
-          ecommerce: {
-            currency: defaultVariant.price.currencyCode || 'ILS',
-            value: parseFloat(defaultVariant.price.amount) || 0,
-            items: [
-              {
-                item_id: product.id,
-                item_name: product.title,
-                price: parseFloat(defaultVariant.price.amount) || 0,
-                currency: defaultVariant.price.currencyCode || 'ILS',
-                quantity: 1,
-              },
-            ],
-          },
-        });
-        hasFired.current = true;
-      }
-    }
-  }, [product]);
+  // #region agent log
+  if (typeof window !== 'undefined') {
+    fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'_index.tsx:163',message:'Index component render (CLIENT)',data:{hasProduct:!!product,hasCartCount:typeof cartCount!=='undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+  } else {
+    fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'_index.tsx:163',message:'Index component render (SSR)',data:{hasProduct:!!product,hasCartCount:typeof cartCount!=='undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+  }
+  // #endregion
 
   return (
     <SelectedVariantProvider>

@@ -3,7 +3,6 @@ import { useCheckout } from '~/lib/useCheckout';
 import { useLoaderData } from '@remix-run/react';
 import { activeContent } from '~/configs/content-active';
 import { useSelectedVariant } from '~/lib/SelectedVariantContext';
-import { useEcommerceTracking } from '~/utils/gtm-tracking';
 
 function InlineDivider() {
   return (
@@ -77,18 +76,11 @@ function CheckoutButton() {
     variant: selectedVariant || undefined,
     quantity: 1,
   });
-  const { trackAddToCart } = useEcommerceTracking();
   const { ctaButton } = activeContent.antiColicBenefits;
 
   const handleCheckout = () => {
     // Use the selected variant from context (default is 0 = ₪199)
     if (selectedVariant?.id && product) {
-      // Track add_to_cart event
-      trackAddToCart({
-        product,
-        variant: selectedVariant,
-        quantity: 1,
-      });
       goToCheckout(selectedVariant.id, 1);
     }
   };

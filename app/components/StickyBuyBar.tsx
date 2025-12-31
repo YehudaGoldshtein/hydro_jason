@@ -3,7 +3,6 @@ import { useCheckout } from '~/lib/useCheckout';
 import { useLoaderData } from '@remix-run/react';
 import { activeContent } from '~/configs/content-active';
 import { landingMedia } from '~/configs/media-active';
-import { useEcommerceTracking } from '~/utils/gtm-tracking';
 
 export function StickyBuyBar() {
   const [visible, setVisible] = useState(true);
@@ -16,7 +15,6 @@ export function StickyBuyBar() {
   });
   const { productName, stockWarning, ctaButton, fallbackImageAlt } = activeContent.stickyBuyBar;
   const { stickyBuyBar: barMedia } = landingMedia;
-  const { trackAddToCart } = useEcommerceTracking();
   const buttonClickedRef = useRef(false);
 
   useEffect(() => {
@@ -49,13 +47,6 @@ export function StickyBuyBar() {
     
     if (defaultVariant?.id && product) {
       buttonClickedRef.current = true;
-      
-      // Track add_to_cart event
-      trackAddToCart({
-        product,
-        variant: defaultVariant,
-        quantity: 1,
-      });
       
       console.log('🚀 Calling goToCheckout with variant 0 (₪199):', defaultVariant.id);
       goToCheckout(defaultVariant.id, 1);

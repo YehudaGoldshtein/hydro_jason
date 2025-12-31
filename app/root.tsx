@@ -39,27 +39,10 @@ export const meta: MetaFunction = () => {
 };
 
 export default function App() {
-  // GTM ID - currently hardcoded, but can be moved to env var if needed
-  // To use env var: const gtmId = context?.env?.PUBLIC_GTM_ID || 'GTM-W9GPB4BZ';
-  const gtmId = 'GTM-W9GPB4BZ';
-  
-  // Meta Pixel ID - hardcoded
+  // Meta Pixel ID
   const metaPixelId = '1855054518452200';
   
-  // #region agent log
-  if (typeof window !== 'undefined') {
-    fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'root.tsx:45',message:'App render (CLIENT)',data:{gtmId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-  } else {
-    fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'root.tsx:45',message:'App render (SSR)',data:{gtmId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-  }
-  // #endregion
-  
-  // GTM script as constant (same for SSR and client)
-  // Using a stable string to prevent hydration mismatches
-  const gtmScript = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`;
-  
-  // Meta Pixel base code (same for SSR and client)
-  // Using a stable string to prevent hydration mismatches
+  // Meta Pixel base code - must be identical for SSR and client to prevent hydration mismatches
   const metaPixelScript = `
     !function(f,b,e,v,n,t,s)
     {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -71,86 +54,6 @@ export default function App() {
     'https://connect.facebook.net/en_US/fbevents.js');
     fbq('init', '${metaPixelId}');
     fbq('track', 'PageView');
-  `.trim();
-  
-  // Error handler to suppress analytics errors from appearing in console
-  // NOTE: This error comes from GTM Container (not our code) - it's a Stape API 422 error
-  // We can suppress it from console, but it will still appear in Network tab (that's normal)
-  const errorHandlerScript = `
-    (function() {
-      // Store original console methods
-      const originalError = console.error;
-      const originalWarn = console.warn;
-      
-      // Suppress console.error messages from Stape/analytics services
-      console.error = function(...args) {
-        const message = args.join(' ').toLowerCase();
-        // Suppress known analytics service errors
-        if (
-          message.includes('capig.stape.de') ||
-          message.includes('stape.de/events') ||
-          message.includes('stape.de') ||
-          (message.includes('422') && message.includes('stape')) ||
-          (message.includes('failed to load resource') && message.includes('422') && message.includes('stape'))
-        ) {
-          // Silently ignore Stape analytics errors
-          return;
-        }
-        // Pass through other errors
-        originalError.apply(console, args);
-      };
-      
-      // Also suppress console.warn for Stape errors
-      console.warn = function(...args) {
-        const message = args.join(' ').toLowerCase();
-        if (
-          message.includes('capig.stape.de') ||
-          message.includes('stape.de/events') ||
-          (message.includes('422') && message.includes('stape'))
-        ) {
-          return;
-        }
-        originalWarn.apply(console, args);
-      };
-      
-      // Intercept XMLHttpRequest errors from Stape (GTM uses XHR internally)
-      const originalXHROpen = XMLHttpRequest.prototype.open;
-      const originalXHRSend = XMLHttpRequest.prototype.send;
-      
-      XMLHttpRequest.prototype.open = function(method, url, ...rest) {
-        this._url = url;
-        // Store original error handlers
-        const originalOnError = this.onerror;
-        const originalOnLoad = this.onload;
-        
-        // If this is a Stape request, suppress error logging
-        if (url && (url.includes('stape.de') || url.includes('capig.stape.de'))) {
-          this.onerror = function() {
-            // Silently ignore Stape errors
-          };
-          this.onload = function() {
-            // Only log non-422 errors (422 is expected from Stape when data is invalid)
-            if (this.status === 422) {
-              // Silently ignore 422 errors from Stape
-              return;
-            }
-            if (originalOnLoad) {
-              originalOnLoad.call(this);
-            }
-          };
-        } else {
-          // For non-Stape requests, use original handlers
-          this.onerror = originalOnError;
-          this.onload = originalOnLoad;
-        }
-        
-        return originalXHROpen.apply(this, [method, url, ...rest]);
-      };
-      
-      XMLHttpRequest.prototype.send = function(...args) {
-        return originalXHRSend.apply(this, args);
-      };
-    })();
   `.trim();
   
   // Generate CSS variables from active theme
@@ -209,21 +112,7 @@ export default function App() {
         <Meta />
         <Links />
         <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
-        {/* Error handler - Must load BEFORE GTM to intercept errors */}
-        <script
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: errorHandlerScript,
-          }}
-        />
-        {/* Google Tag Manager - Must be in <head> for GTM Helper to detect it */}
-        <script
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: gtmScript,
-          }}
-        />
-        {/* Meta Pixel */}
+        {/* Meta Pixel Code */}
         <script
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
@@ -232,13 +121,14 @@ export default function App() {
         />
       </head>
       <body style={{ fontFamily: 'var(--font-family-main)' }}>
-        {/* Google Tag Manager (noscript) */}
+        {/* Meta Pixel noscript fallback */}
         <noscript>
-          <iframe
-            src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
-            height="0"
-            width="0"
-            style={{ display: 'none', visibility: 'hidden' }}
+          <img
+            height="1"
+            width="1"
+            style={{ display: 'none' }}
+            src={`https://www.facebook.com/tr?id=${metaPixelId}&ev=PageView&noscript=1`}
+            alt=""
           />
         </noscript>
         <Outlet />
