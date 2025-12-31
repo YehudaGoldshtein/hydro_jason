@@ -1,6 +1,9 @@
 import { Facebook, Instagram, Mail, Phone } from 'lucide-react';
 import { activeContent } from '~/configs/content-active';
 
+// Use constant year to prevent hydration mismatch - getFullYear() can differ between SSR and client in edge cases
+const CURRENT_YEAR = 2025;
+
 export function Footer() {
   const { about, quickLinks, contact, whatsappButton } = activeContent.footer;
 
@@ -114,7 +117,8 @@ export function Footer() {
         {/* Bottom Border & Copyright */}
         <div className="border-t border-[#f2e3dd] pt-8 md:pt-10">
           <p className="text-center text-sm text-text-muted">
-            © {new Date().getFullYear()} Feed-Ease. כל הזכויות שמורות.
+            {/* Use constant year to prevent hydration mismatch */}
+            <span>© {CURRENT_YEAR} Feed-Ease. כל הזכויות שמורות.</span>
           </p>
         </div>
       </div>

@@ -160,14 +160,6 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 export default function Index() {
   const { product, cartCount } = useLoaderData<typeof loader>();
 
-  // #region agent log
-  if (typeof window !== 'undefined') {
-    fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'_index.tsx:163',message:'Index component render (CLIENT)',data:{hasProduct:!!product,hasCartCount:typeof cartCount!=='undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-  } else {
-    fetch('http://127.0.0.1:7242/ingest/26410a63-5106-4bd0-b49a-22b6d6600567',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'_index.tsx:163',message:'Index component render (SSR)',data:{hasProduct:!!product,hasCartCount:typeof cartCount!=='undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-  }
-  // #endregion
-
   return (
     <SelectedVariantProvider>
       <Layout cartCount={cartCount}>
